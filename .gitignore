@@ -1,0 +1,85 @@
+# ==============================================================================
+# ENVIRONMENT VARIABLES & API KEYS (CRITICAL SECURITY)
+# ==============================================================================
+# Jangan pernah meng-commit file .env yang berisi API key asli
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+!*.env.example
+
+# Private keys & certificates
+*.pem
+*.key
+*.cert
+
+# ==============================================================================
+# LOCAL DATABASE & GENERATED MEDIA (DATA SAFETY & STORAGE)
+# ==============================================================================
+# SQLite database files & WAL journals
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.sqlite
+data/*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Generated output images directory (Microstock vector PNGs)
+data/outputs/
+outputs/
+!data/.gitkeep
+!data/outputs/.gitkeep
+
+# ==============================================================================
+# DEPENDENCIES
+# ==============================================================================
+node_modules/
+.pnp
+.pnp.js
+
+# ==============================================================================
+# BUILD OUTPUTS & CACHES
+# ==============================================================================
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+.vite/
+.turbo/
+.cache/
+.drizzle/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==============================================================================
+# OS & EDITOR ARTIFACTS
+# ==============================================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Temporary test scripts & scratchpads
+test-*.ts
+test-*.js
+scratch/
+

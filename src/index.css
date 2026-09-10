@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-radius: 0px !important;
+  }
+
+  body {
+    background-color: #fafaf9;
+    color: #1c1917;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Monospace numbers & technical data */
+  .font-mono-industrial {
+    font-family: 'IBM Plex Mono', monospace;
+    font-feature-settings: 'tnum' on, 'zero' on;
+  }
+}
+
+/* Document-like clean border layout */
+.border-industrial {
+  border: 1px solid #e7e5e4;
+}
+
+.border-industrial-dark {
+  border: 1px solid #1c1917;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
