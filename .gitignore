@@ -4,10 +4,14 @@
 # Jangan pernah meng-commit file .env yang berisi API key asli
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 *.env
+*.env.local
 !.env.example
 !*.env.example
 
@@ -15,6 +19,7 @@
 *.pem
 *.key
 *.cert
+*.crt
 
 # ==============================================================================
 # LOCAL DATABASE & GENERATED MEDIA (DATA SAFETY & STORAGE)
@@ -25,22 +30,31 @@ data/*.db-shm
 data/*.db-wal
 data/*.sqlite
 data/*.sqlite3
+data/*.sqlite-shm
+data/*.sqlite-wal
 *.db
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
 
 # Generated output images directory (Microstock vector PNGs)
-data/outputs/
-outputs/
-!data/.gitkeep
+data/outputs/*
 !data/outputs/.gitkeep
+!data/.gitkeep
+outputs/
 
 # ==============================================================================
-# DEPENDENCIES
+# DEPENDENCIES & PACKAGE MANAGERS
 # ==============================================================================
 node_modules/
 .pnp
 .pnp.js
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
 
 # ==============================================================================
 # BUILD OUTPUTS & CACHES
@@ -48,11 +62,13 @@ node_modules/
 dist/
 dist-ssr/
 build/
+out/
 *.tsbuildinfo
 .vite/
 .turbo/
 .cache/
 .drizzle/
+.eslintcache
 
 # Logs
 logs/
@@ -66,20 +82,46 @@ lerna-debug.log*
 # ==============================================================================
 # OS & EDITOR ARTIFACTS
 # ==============================================================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
 ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors & IDEs
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.swp
 *.swo
+*~
+*.sublime-project
+*.sublime-workspace
 
 # Temporary test scripts & scratchpads
 test-*.ts
 test-*.js
+test_*.ts
+test_*.js
 scratch/
+temp/
+tmp/
+*.tmp
+*.bak
 
+# AI agent local metadata
+.agents/local/
+.gemini/

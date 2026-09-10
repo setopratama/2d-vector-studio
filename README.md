@@ -2,7 +2,7 @@
 
 Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)** berbasis AI lokal mandiri. Dilengkapi dengan sistem **Pra-Estimasi Biaya Terpisah Transparan (Prompt vs Gambar)**, **Auto-Runner Wizard (Pilihan Kelipatan 10 & Bebas)**, dan penyimpanan database **SQLite Lokal**.
 
-![App Preview](docs/images/preview_studio.png)
+![App Preview](docs/images/Screenshot_1.png)
 
 ---
 
