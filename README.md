@@ -2,6 +2,8 @@
 
 Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)** berbasis AI lokal mandiri. Dilengkapi dengan sistem **Pra-Estimasi Biaya Terpisah Transparan (Prompt vs Gambar)**, **Auto-Runner Wizard (Pilihan Kelipatan 10 & Bebas)**, dan penyimpanan database **SQLite Lokal**.
 
+![App Preview](docs/images/preview_studio.png)
+
 ---
 
 ## 🌟 Fitur Utama
@@ -13,6 +15,8 @@ Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)**
 - **Kontrol Antrean Penuh**: Dilengkapi tombol **Jeda (Pause)**, **Lanjutkan (Resume)**, dan **Berhenti (Stop)**.
 - **Live Stream Preview**: Hasil gambar langsung muncul satu per satu di galeri begitu selesai tanpa menunggu batch selesai.
 - **Batch Download**: Unduh semua gambar format PNG siap pakai dengan 1 klik.
+
+![Auto-Runner Wizard](docs/images/wizard_modal.png)
 
 ### 2. 🎨 Garansi Konsistensi 6 Preset Gaya 2D Vektor
 Terkunci ketat (*Strict Style Locking*) sehingga variasi sudut pandang tidak akan pernah bercampur ke genre visual lain:
@@ -76,6 +80,8 @@ GPTIMAGEGENERATE/
 ├── AGENTS.md                   # Panduan arsitektur & AI Agent
 ├── DESIGN.md                   # Panduan desain Industrial Minimalism
 ├── README.md                   # Dokumentasi proyek ini
+├── docs/                       # Dokumentasi & Aset Gambar
+│   └── images/                 # Folder penyimpanan gambar screenshot README.md
 ├── package.json                # Dependencies & npm scripts
 ├── vite.config.ts              # Konfigurasi Vite & API proxy ke Fastify (:3001)
 ├── data/
