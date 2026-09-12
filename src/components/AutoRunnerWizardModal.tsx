@@ -127,7 +127,7 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
         metadata: {
           title: seoTitle,
           keywords: item.keywords || [],
-          description: item.optimizedPrompt,
+          description: seoTitle,
           author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
           software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
           credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
@@ -151,7 +151,7 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
     await downloadSingleImage(url, fileName, {
       title: seoTitle,
       keywords: item.keywords || [],
-      description: item.optimizedPrompt,
+      description: seoTitle,
       author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
       software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
       credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,

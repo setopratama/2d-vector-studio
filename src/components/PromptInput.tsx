@@ -134,7 +134,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           )}
         </div>
 
-        {/* AI Concept Expander Widget (1-2 Words -> 4 Natural Subject Concepts 3-4 Words) */}
+        {/* AI Concept Expander Widget (1-2 Words -> 5 Natural Subject Concepts 3-4 Words) */}
         {showConceptExpander && (
           <KeywordExpanderWidget
             currentRawIdea={rawIdea}

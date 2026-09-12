@@ -1,11 +1,11 @@
 # ⚡ Agentic AI 2D Vector Studio
 
-[![Version](https://img.shields.io/badge/version-v1.3.0-amber.svg?style=flat-square)](docs/VERSION_CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.3.1-amber.svg?style=flat-square)](docs/VERSION_CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Proprietary-stone.svg?style=flat-square)](#-lisensi)
 [![Stack](https://img.shields.io/badge/stack-React_19_+_Fastify_+_SQLite-blue.svg?style=flat-square)](docs/ARCHITECTURE.md)
 [![Metadata](https://img.shields.io/badge/metadata-IPTC_%7C_EXIF_%7C_XMP-emerald.svg?style=flat-square)](docs/METADATA_SPECIFICATION.md)
 
-Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)** berbasis AI lokal mandiri (*local-first / self-hosted*). Dirancang khusus untuk desainer, ilustrator, dan kontributor microstock (**Adobe Stock**, **Shutterstock**, **Freepik**) dengan sistem **Pra-Estimasi Biaya Transparan (Prompt vs Gambar)**, **AI Concept Expander**, **Auto-Runner Wizard**, dan **Injektor Metadata Biner 3-Lapisan Tanpa Dependensi Luar**.
+Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)** berbasis AI lokal mandiri (*local-first / self-hosted*). Dirancang khusus untuk desainer, ilustrator, dan kontributor microstock (**Adobe Stock**, **Shutterstock**, **Freepik**) dengan sistem **Pra-Estimasi Biaya Transparan (Prompt vs Gambar)**, **AI Concept Expander**, **Auto-Runner Wizard**, **7 Gaya Grafis 2D Siap Vektor**, dan **Injektor Metadata Biner 3-Lapisan Tanpa Dependensi Luar**.
 
 ---
 
@@ -15,20 +15,20 @@ Untuk panduan mendalam dan spesifikasi teknis lengkap, silakan merujuk ke dokume
 
 | Dokumen | Deskripsi Singkat |
 |---|---|
-| 📖 **[Panduan Pengguna (User Guide)](docs/USER_GUIDE.md)** | Panduan alur kerja dari input 1–2 kata dasar, pemilihan gaya 2D, kalkulasi biaya, Auto-Runner, hingga ekspor PNG ber-metadata. |
+| 📖 **[Panduan Pengguna (User Guide)](docs/USER_GUIDE.md)** | Panduan alur kerja dari input 1–2 kata dasar, pemilihan 7 gaya 2D, kalkulasi biaya, Auto-Runner, hingga ekspor PNG ber-metadata. |
 | 🏗️ **[Arsitektur & Spesifikasi Sistem](docs/ARCHITECTURE.md)** | Desain monorepo terpadu (Vite + React 19 + Fastify + SQLite `better-sqlite3`), FIFO queue worker, dan alur API AI. |
 | 🔒 **[Spesifikasi Injeksi Metadata Biner](docs/METADATA_SPECIFICATION.md)** | Penjelasan teknis injektor biner 3-lapisan (*IPTC IIM 8BIM, EXIF IFD0 UCS-2, Adobe XMP*) murni tanpa `exiftool`/`sharp`. |
-| 📜 **[Riwayat Versi & Catatan Rilis (Changelog)](docs/VERSION_CHANGELOG.md)** | Catatan pembaruan dari `v1.0.0` hingga `v1.3.0`, saklar mode UI, dan panduan rollback Git Tag. |
+| 📜 **[Riwayat Versi & Catatan Rilis (Changelog)](docs/VERSION_CHANGELOG.md)** | Catatan pembaruan dari `v1.0.0` hingga `v1.3.1`, saklar mode UI, dan panduan rollback Git Tag. |
 
 ---
 
 ## 🌟 Fitur Utama
 
-### 1. 🧠 AI Concept Expander (1–2 Kata Dasar → 4 Ide Subjek 3–4 Kata)
+### 1. 🧠 AI Concept Expander (1–2 Kata Dasar → 5 Ide Subjek 3–4 Kata)
 - **Solusi Buntu Ide**: Cukup ketik 1 atau 2 kata dasar (misal: *"kopi susu"*, *"rubah mekanik"*, *"mobil"*).
-- **Subjek Murni & Netral**: Menghasilkan 4 ide konsep subjek/objek imajinatif (tepat 3–4 kata) tanpa embel-embel label gaya teknis (*flat, stencil, badge*), sehingga bebas dipadukan dengan gaya grafis 2D apa pun tanpa bentrok kata.
+- **Subjek Murni & Netral**: Menghasilkan 5 ide konsep subjek/objek imajinatif (tepat 3–4 kata) tanpa embel-embel label gaya teknis (*flat, stencil, badge*), sehingga bebas dipadukan dengan gaya grafis 2D apa pun tanpa bentrok kata.
 - **Transparansi Biaya & Token**: Pra-estimasi dan biaya riil aktual (~$0.000030 / ~Rp 0,50 per 1x eksekusi).
-- **1-Klik Terapkan**: Klik kartu konsep untuk mengisi input utama atau masukkan sekaligus ke list pack.
+- **1-Klik Terapkan / Multi-Line Pack**: Klik kartu konsep untuk mengisi input utama atau masukkan sekaligus ke list pack multi-baris.
 
 ### 2. ⚡ Auto-Runner Wizard (Batch Pipeline Kelipatan 10 & Bebas)
 - **Input 1 Keyword**: Masukkan ide subjek singkat.
@@ -37,13 +37,14 @@ Untuk panduan mendalam dan spesifikasi teknis lengkap, silakan merujuk ke dokume
 - **Kontrol Penuh**: Tombol **Jeda (Pause)**, **Lanjutkan (Resume)**, dan **Berhenti (Stop)** dengan akumulasi biaya riil.
 - **Batch Download**: Unduh semua gambar ber-metadata dengan penamaan file SEO bersih.
 
-### 3. 🎨 6 Preset Gaya 2D Siap Vektor (Terkunci Konsisten)
+### 3. 🎨 7 Preset Gaya 2D Siap Vektor (Terkunci Konsisten)
 1. **Flat Vector Art**: Minimalist screen-print, garis tegas, warna datar padat, siap autotrace SVG.
 2. **Mascot Character**: Maskot karakter die-cut dengan garis kontur tebal untuk merchandise & esport.
-3. **Monoline Line Art**: Garis tunggal presisi dengan ketebalan seragam (*uniform stroke width*).
+3. **Monoline Line Art**: Garis tunggal presisi dengan ketebalan seragam (*uniform stroke width*), tanpa gradasi.
 4. **Sticker Decal**: Stiker grafis dengan border offset putih die-cut.
 5. **Vintage Badge / Emblem**: Segel retro geometris simetris dengan linework stempel klasik.
 6. **Stencil Silhouette**: Siluet kontras tinggi dengan jembatan *negative space*.
+7. **Premium Line Art Icon**: Mandat *zero-color fill*, monoline hitam pekat murni, 85–90% simplifikasi siluet, ~70–75% *negative white space*, sempurna untuk buku mewarnai (*coloring page printable*) dan microstock SVG icon.
 
 ### 4. ⬛ Mode Hitam Putih (B&W Monochrome Vector)
 - Menghasilkan tinta hitam pekat 100% di atas latar belakang putih bersih (*zero grayscale, zero shadows*).
@@ -61,11 +62,12 @@ Untuk panduan mendalam dan spesifikasi teknis lengkap, silakan merujuk ke dokume
   2. **EXIF IFD0**: Tag standar (`ImageDescription`, `Artist`, `Software`) dan Tag Windows XP Extended (`XPTitle`, `XPKeywords`, `XPComment`, `XPAuthor`, `XPSubject`) berformat UCS-2 / UTF-16LE.
   3. **Adobe XMP Packet**: Chunk PNG `iTXt` & JPEG APP1 memuat RDF XML Dublin Core (`dc:title`, `dc:description`, `dc:subject`, `dc:creator`) & Photoshop Headline/Credit.
 - **AI Agent Auto SEO Title**: Judul Stock bahasa Inggris teroptimasi dengan batas ketat **maksimal 120 karakter**.
-- **10–48 Keywords Microstock**: AI mengekspansi 25–45 kata kunci (*tags*) berbahasa Inggris dengan batasan **maksimal 2 kata per tag**.
+- **10–48 Keywords Microstock**: AI mengekspansi 25–45 kata kunci (*tags*) berbahasa Inggris dengan batasan **maksimal 2 kata per tag**, lengkap dengan tombol salin koma (*Salin Koma*).
+- **⚡ Generate SEO Metadata On-Demand**: Jika pembuatan awal prompt tanpa metadata SEO, setiap kartu menyediakan tombol banner on-demand untuk men-generate SEO Title dan 48 Tags secara mandiri (~Rp 0,3).
 - **Profil Kontributor & Pembersihan Tag (Anti-Reject Microstock)**:
   - Modal pengaturan **`[ 👤 Author / Profil Kontributor ]`** untuk mengisi nama Author/Artist/Brand.
   - Tag Software default: **`Adobe Illustrator`** (tanpa kata "AI" atau "AI Generator") agar aman saat lolos review kurasi.
-- **Nama File SEO Bersih (Tanpa `1x1`)**: File unduhan otomatis dinamai sesuai judul SEO yang disanitasi (misal: `vintage_coffee_roastery_badge_isolated_on_white_background.png`).
+- **Nama File SEO Bersih (Format Spasi Alami)**: File unduhan otomatis dinamai sesuai judul SEO yang disanitasi bersih tanpa underscore (misal: `vintage coffee roastery badge isolated on white background.png`).
 
 ### 7. ⏳ Background Task Queue Worker & Offline Auto-Cancellation
 - **FIFO Background Execution**: Mengantrekan permintaan dan mengeksekusinya secara berurutan dengan jeda aman 600ms untuk mencegah rate limiting (HTTP 429).
@@ -116,7 +118,7 @@ GPTIMAGEGENERATE/
 │   ├── USER_GUIDE.md           # Panduan pengguna langkah demi langkah
 │   ├── ARCHITECTURE.md         # Arsitektur sistem, Fastify & SQLite
 │   ├── METADATA_SPECIFICATION.md # Spesifikasi biner IPTC/EXIF/XMP
-│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v1.3.0 & rollback
+│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v1.3.1 & rollback
 ├── package.json                # Dependencies gabungan & npm scripts
 ├── vite.config.ts              # Konfigurasi Vite & API proxy ke Fastify (:3001)
 ├── data/                       # Direktori Data Lokal Disk
@@ -139,9 +141,9 @@ GPTIMAGEGENERATE/
 └── src/                        # Frontend React 19 + Vite
     ├── App.tsx                 # Main application layout, state & modals
     ├── components/
-    │   ├── Navbar.tsx          # Top bar, live kurs, profil author, badge versi v1.3.0
+    │   ├── Navbar.tsx          # Top bar, live kurs, profil author, badge versi v1.3.1
     │   ├── PromptInput.tsx     # Form ide, mode batch, & checklist B&W
-    │   ├── KeywordExpanderWidget.tsx # AI Concept Expander (1-2 kata -> 4 ide subjek)
+    │   ├── KeywordExpanderWidget.tsx # AI Concept Expander (1-2 kata -> 5 ide subjek)
     │   ├── CostEstimationCard.tsx # Pra-estimasi token & biaya terpisah
     │   ├── UnifiedVariationCard.tsx # Kartu mandiri side-by-side (Prompt Kiri, Gambar Kanan)
     │   ├── BatchCardsGrid.tsx  # Grid galeri hasil batch & master actions
@@ -162,7 +164,7 @@ GPTIMAGEGENERATE/
     │   ├── imageMetadataInjector.ts # Injektor biner 3-layer murni (IPTC/EXIF/XMP)
     │   ├── downloadHelper.ts   # Helper unduh single & sequential batch ber-metadata
     │   ├── costCalculator.ts   # Formula kalkulasi tarif token & visual
-    │   └── vectorGraphicGenerator.ts # Generator fallback visual 2D vektor
+    │   └── vectorGraphicGenerator.ts # Generator fallback visual 2D vektor (7 Presets)
     └── types/
         ├── prompt.ts           # Tipe data prompt, images, & biaya
         └── errorLog.ts         # Tipe data log error sistem
@@ -224,7 +226,7 @@ http://localhost:5173
 | `GET` | `/api/prompts` | Mengambil seluruh riwayat kartu dari SQLite |
 | `POST` | `/api/prompts` | Menyimpan / memperbarui (*upsert*) kartu variasi |
 | `POST` | `/api/prompts/batch` | Menyimpan banyak kartu variasi sekaligus ke SQLite |
-| `POST` | `/api/expand-keywords` | Mengembangkan 1–2 kata dasar menjadi 4 ide subjek netral (3–4 kata) |
+| `POST` | `/api/expand-keywords` | Mengembangkan 1–2 kata dasar menjadi 5 ide subjek netral (3–4 kata) |
 | `POST` | `/api/generate-prompt` | Ekspansi Prompt AI via DeepSeek v4 Flash + Adobe Stock SEO Title & Keywords |
 | `POST` | `/api/generate-image` | Generate visual 1:1 via GPT Image 2.5 Sunburst & simpan file disk |
 | `GET` | `/api/currency/exchange-rate` | Ambil kurs USD $\rightarrow$ IDR harian dari `api.co.id` |

@@ -190,6 +190,33 @@ export async function promptsRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // POST /api/generate-seo-metadata - Generate English Adobe Stock Title & 30-48 Tags on-demand for a card
+  fastify.post('/api/generate-seo-metadata', async (request, reply) => {
+    const body: any = request.body || {};
+    try {
+      const { generateCardSeoMetadata } = await import('../services/prompt-engine.service');
+      const result = await generateCardSeoMetadata({
+        rawIdea: body.rawIdea || '',
+        optimizedPrompt: body.optimizedPrompt || '',
+        vectorStyle: body.vectorStyle || '',
+        stylePreset: body.stylePreset || '',
+        isBlackAndWhite: body.isBlackAndWhite ? true : false,
+      }, body.model);
+      return { success: true, ...result };
+    } catch (err: any) {
+      const { logSystemError } = await import('../services/error-logger.service');
+      await logSystemError({
+        type: 'prompt-expansion',
+        model: body.model || process.env.OPENROUTER_PROMPT_MODEL || 'deepseek/deepseek-v4.1-flash',
+        statusCode: err.statusCode || 500,
+        message: err.message || 'SEO metadata generation failed',
+        promptSnippet: body.rawIdea || body.optimizedPrompt || 'N/A',
+        stack: err.stack,
+      });
+      reply.status(500).send({ error: err.message });
+    }
+  });
+
   // POST /api/generate-prompt - AI Prompt Expansion via OpenRouter / Custom Endpoint
   fastify.post('/api/generate-prompt', async (request, reply) => {
     const body: any = request.body || {};

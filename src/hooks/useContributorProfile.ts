@@ -34,13 +34,13 @@ export function useContributorProfile() {
         const parsed = JSON.parse(savedV2);
         return {
           includeAuthor: parsed.includeAuthor !== undefined ? Boolean(parsed.includeAuthor) : true,
-          authorName: parsed.authorName || DEFAULT_CONTRIBUTOR_PROFILE.authorName,
+          authorName: parsed.authorName !== undefined ? parsed.authorName : DEFAULT_CONTRIBUTOR_PROFILE.authorName,
           includeSoftware: parsed.includeSoftware !== undefined ? Boolean(parsed.includeSoftware) : true,
-          softwareName: parsed.softwareName || DEFAULT_CONTRIBUTOR_PROFILE.softwareName,
+          softwareName: parsed.softwareName !== undefined ? parsed.softwareName : DEFAULT_CONTRIBUTOR_PROFILE.softwareName,
           includeCredit: parsed.includeCredit !== undefined ? Boolean(parsed.includeCredit) : true,
-          credit: parsed.credit || parsed.authorName || DEFAULT_CONTRIBUTOR_PROFILE.credit,
+          credit: parsed.credit !== undefined ? parsed.credit : DEFAULT_CONTRIBUTOR_PROFILE.credit,
           includeSource: parsed.includeSource !== undefined ? Boolean(parsed.includeSource) : true,
-          source: parsed.source || DEFAULT_CONTRIBUTOR_PROFILE.source,
+          source: parsed.source !== undefined ? parsed.source : DEFAULT_CONTRIBUTOR_PROFILE.source,
         };
       }
 

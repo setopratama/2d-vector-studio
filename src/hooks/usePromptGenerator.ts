@@ -46,6 +46,7 @@ export function usePromptGenerator() {
   const isWorkerRunningRef = useRef<boolean>(false);
   const [activeGeneratingCardId, setActiveGeneratingCardId] = useState<string | null>(null);
   const [activeTaskType, setActiveTaskType] = useState<QueueTask['type'] | null>(null);
+  const [generatingSeoCardId, setGeneratingSeoCardId] = useState<string | null>(null);
 
   // Sync ref with queue state
   useEffect(() => {
@@ -389,6 +390,9 @@ export function usePromptGenerator() {
       const nextVersionNum = existingVersions.length + 1;
       const angleIndex = (nextVersionNum - 1) % presetVariations.length;
       const angle = presetVariations[angleIndex];
+      const hasExistingSeo = Boolean(
+        target.adobeStockTitle || (Array.isArray(target.keywords) && target.keywords.length > 0)
+      );
 
       const aiRes = await fetch('/api/generate-prompt', {
         method: 'POST',
@@ -400,7 +404,7 @@ export function usePromptGenerator() {
           variationStyle: angle.style,
           variationIndex: target.variationIndex || 1,
           isBlackAndWhite: target.isBlackAndWhite,
-          includeMetadata: Boolean(target.keywords && target.keywords.length > 5),
+          includeMetadata: hasExistingSeo,
         }),
       });
 
@@ -413,8 +417,8 @@ export function usePromptGenerator() {
           const newPromptCostIdr = aiData.usage?.promptCostIdr || target.promptCostIdr;
 
           const newTitle = aiData.title ? `${aiData.title} [v${nextVersionNum}: ${angle.style}]` : `${target.title} (v${nextVersionNum})`;
-          const newAdobeStockTitle = aiData.adobeStockTitle || target.adobeStockTitle;
-          const newKeywords = aiData.keywords || target.keywords;
+          const newAdobeStockTitle = aiData.adobeStockTitle !== undefined ? aiData.adobeStockTitle : target.adobeStockTitle;
+          const newKeywords = Array.isArray(aiData.keywords) ? aiData.keywords : target.keywords;
           const newNegativePrompt = aiData.negativePrompt || target.negativePrompt;
           const newVectorStyle = aiData.vectorStyle || target.vectorStyle;
 
@@ -673,12 +677,16 @@ export function usePromptGenerator() {
         let promptCostUsd = ((inputTokens * PRICING_CONFIG.PROMPT_INPUT_PER_TOKEN_USD) + (outputTokens * PRICING_CONFIG.PROMPT_OUTPUT_PER_TOKEN_USD)).toFixed(6);
         let promptCostIdr = formatIdr(parseFloat(promptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
 
-        let adobeStockTitle = `${concept.slice(0, 70)} 2D Vector Illustration Icon Isolated on White Background`;
-        let keywords: string[] = [
-          ...concept.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
-          'vector', 'illustration', 'icon', 'graphic', 'design', 'flat design',
-          'isolated', 'white background', 'clipart', '2d vector', 'stock asset'
-        ];
+        let adobeStockTitle: string | undefined = includeMetadata
+          ? `${concept.slice(0, 70)} 2D Vector Illustration Icon Isolated on White Background`
+          : undefined;
+        let keywords: string[] | undefined = includeMetadata
+          ? [
+              ...concept.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
+              'vector', 'illustration', 'icon', 'graphic', 'design', 'flat design',
+              'isolated', 'white background', 'clipart', '2d vector', 'stock asset'
+            ]
+          : undefined;
 
         try {
           const aiRes = await fetch('/api/generate-prompt', {
@@ -699,9 +707,13 @@ export function usePromptGenerator() {
             const aiData = await aiRes.json();
             if (aiData.optimizedPrompt) {
               optimizedPrompt = aiData.optimizedPrompt;
-              if (aiData.title) title = `${aiData.title} [Var #${idx + 1}]`;
-              if (aiData.adobeStockTitle) adobeStockTitle = aiData.adobeStockTitle;
-              if (Array.isArray(aiData.keywords) && aiData.keywords.length > 0) keywords = aiData.keywords;
+              if (aiData.title) {
+                title = inputMode === 'multi-keyword'
+                  ? `${aiData.title} [Item #${idx + 1}]`
+                  : `${aiData.title} [Var #${idx + 1}]`;
+              }
+              if (aiData.adobeStockTitle !== undefined) adobeStockTitle = aiData.adobeStockTitle;
+              if (Array.isArray(aiData.keywords)) keywords = aiData.keywords;
               if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
               if (aiData.vectorStyle) vectorStyle = aiData.vectorStyle;
               if (aiData.usage) {
@@ -827,7 +839,7 @@ export function usePromptGenerator() {
         metadata: {
           title: seoTitle,
           keywords: item.keywords || [],
-          description: item.optimizedPrompt,
+          description: seoTitle,
           author: profile?.includeAuthor ? (profile.authorName || undefined) : undefined,
           software: profile?.includeSoftware ? (profile.softwareName || undefined) : undefined,
           credit: profile?.includeCredit ? (profile.credit || undefined) : undefined,
@@ -869,6 +881,93 @@ export function usePromptGenerator() {
   };
 
   /**
+   * On-Demand SEO Metadata Generator for a single card
+   */
+  const handleGenerateSeoMetadataForCard = async (promptId: string) => {
+    const target = activePromptsRef.current.find((p) => p.id === promptId) || historyRef.current.find((p) => p.id === promptId);
+    if (!target) return;
+
+    setGeneratingSeoCardId(promptId);
+    try {
+      const activeVIdx = typeof target.activePromptVersionIndex === 'number'
+        ? target.activePromptVersionIndex
+        : (target.promptVersions && target.promptVersions.length > 0 ? target.promptVersions.length - 1 : 0);
+      const activePromptObj = target.promptVersions?.[activeVIdx];
+      const activePromptText = activePromptObj?.optimizedPrompt || target.optimizedPrompt;
+
+      const res = await fetch('/api/generate-seo-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rawIdea: target.rawIdea,
+          optimizedPrompt: activePromptText,
+          vectorStyle: target.vectorStyle,
+          stylePreset: target.stylePreset,
+          isBlackAndWhite: target.isBlackAndWhite,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Gagal menghasilkan metadata SEO');
+      }
+
+      const data = await res.json();
+      if (data.adobeStockTitle && Array.isArray(data.keywords)) {
+        const addedCostUsd = parseFloat(data.usage?.promptCostUsd || '0.000030');
+        const updatedPromptCostUsd = (parseFloat(target.promptCostUsd || '0') + addedCostUsd).toFixed(6);
+        const updatedPromptCostIdr = formatIdr(parseFloat(updatedPromptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
+        const updatedTotalCostUsd = (parseFloat(target.totalCostUsd || '0') + addedCostUsd).toFixed(6);
+        const updatedTotalCostIdr = formatIdr(parseFloat(updatedTotalCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
+
+        const updatedVersions = (target.promptVersions || []).map((v, idx) => {
+          if (idx === activeVIdx) {
+            return {
+              ...v,
+              adobeStockTitle: data.adobeStockTitle,
+              keywords: data.keywords,
+            };
+          }
+          return v;
+        });
+
+        const updated: PromptItem = {
+          ...target,
+          adobeStockTitle: data.adobeStockTitle,
+          keywords: data.keywords,
+          promptVersions: updatedVersions.length > 0 ? updatedVersions : [{
+            version: 1,
+            title: target.title,
+            adobeStockTitle: data.adobeStockTitle,
+            keywords: data.keywords,
+            optimizedPrompt: target.optimizedPrompt,
+            negativePrompt: target.negativePrompt,
+            vectorStyle: target.vectorStyle,
+            inputTokens: target.inputTokens,
+            outputTokens: target.outputTokens,
+            promptCostUsd: target.promptCostUsd,
+            timestamp: target.createdAt,
+          }],
+          inputTokens: target.inputTokens + (data.usage?.promptTokens || 0),
+          outputTokens: target.outputTokens + (data.usage?.completionTokens || 0),
+          promptCostUsd: updatedPromptCostUsd,
+          promptCostIdr: updatedPromptCostIdr,
+          totalCostUsd: updatedTotalCostUsd,
+          totalCostIdr: updatedTotalCostIdr,
+        };
+
+        updatePromptInStateAndHistory(updated);
+        saveCardToDb(updated);
+      }
+    } catch (err: any) {
+      console.error('Error generating SEO metadata for card:', err);
+      setErrorMessage(err.message || 'Gagal menghasilkan metadata SEO');
+    } finally {
+      setGeneratingSeoCardId(null);
+    }
+  };
+
+  /**
    * Clear all cards
    */
   const handleClearHistory = () => {
@@ -889,6 +988,7 @@ export function usePromptGenerator() {
     taskQueue,
     activeGeneratingCardId,
     activeTaskType,
+    generatingSeoCardId,
     getCardQueueStatus,
     cancelQueueTask,
     cancelAllQueueTasks,
@@ -897,6 +997,7 @@ export function usePromptGenerator() {
     handleGeneratePrompts,
     handleRegeneratePrompt,
     handleSelectPromptVersion,
+    handleGenerateSeoMetadataForCard,
     handleGenerateImageForPrompt,
     handleGenerateAllBatchImages,
     handleRegenerateImage,

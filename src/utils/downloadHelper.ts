@@ -61,10 +61,10 @@ export async function downloadSingleImage(
         title: metadata.title || '2D Vector Art',
         keywords: metadata.keywords || [],
         description: metadata.description || metadata.title,
-        author: metadata.author || 'Vector Artist',
-        software: metadata.software || 'Adobe Illustrator',
-        credit: metadata.credit || metadata.author || 'Vector Artist',
-        source: metadata.source || 'Original Vector Artwork',
+        author: metadata.author?.trim() || undefined,
+        software: metadata.software?.trim() || undefined,
+        credit: metadata.credit?.trim() || undefined,
+        source: metadata.source?.trim() || undefined,
       };
       const injectedBytes = injectImageMetadata(new Uint8Array(arrayBuffer), payload);
       finalBlob = new Blob([injectedBytes.buffer as ArrayBuffer], { type: mimeType });

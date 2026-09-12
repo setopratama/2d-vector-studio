@@ -178,6 +178,27 @@ export function generate2DVectorSvgDataUrl(
       break;
     }
 
+    case 'premium-line-art': {
+      // Premium Minimal Monoline Line Art Icon (~25% scale, 75% negative white space, zero fill)
+      centralArtwork = `
+      <g transform="scale(0.85)" fill="none" stroke="${isBlackAndWhite ? '#000000' : mainColor}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Iconic Architectural / Subject Outer Contour -->
+        <path d="M0,-160 L100,-70 L100,120 L-100,120 L-100,-70 Z" />
+        <!-- Essential Roof / Peak Silhouette -->
+        <path d="M-120,-60 L0,-160 L120,-60" />
+        <!-- Primary Structural Lines -->
+        <line x1="0" y1="-160" x2="0" y2="120" stroke-dasharray="4,8" />
+        <line x1="-100" y1="20" x2="100" y2="20" />
+        <!-- Essential Geometric Windows / Portal -->
+        <rect x="-40" y="40" width="80" height="80" rx="40" />
+        <line x1="0" y1="40" x2="0" y2="120" />
+        <circle cx="-50" cy="-20" r="16" />
+        <circle cx="50" cy="-20" r="16" />
+      </g>
+      `;
+      break;
+    }
+
     default: {
       centralArtwork = `
       <g transform="scale(1.2)">

@@ -24,6 +24,8 @@ interface BatchCardsGridProps {
   onGenerateAllBatchImages: () => void;
   onRegenerateImage: (promptId: string) => void;
   onRegeneratePrompt?: (promptId: string) => void;
+  onGenerateSeoMetadata?: (promptId: string) => void;
+  generatingSeoCardId?: string | null;
   onSelectPromptVersion?: (promptId: string, versionIndex: number) => void;
   onCancelQueueTask: (promptId: string) => void;
   onCancelAllQueueTasks: () => void;
@@ -41,6 +43,8 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
   onGenerateAllBatchImages,
   onRegenerateImage,
   onRegeneratePrompt,
+  onGenerateSeoMetadata,
+  generatingSeoCardId,
   onSelectPromptVersion,
   onCancelQueueTask,
   onCancelAllQueueTasks,
@@ -101,42 +105,43 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
             </div>
           </div>
 
-          {/* Master Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Cancel all queue button if queue active */}
-            {isQueueActive && (
-              <button
-                onClick={onCancelAllQueueTasks}
-                className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-500 font-mono text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-                title="Batalkan seluruh antrean yang sedang menunggu"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                <span>BATALKAN SEMUA ANTREAN ({taskQueue.length})</span>
-              </button>
-            )}
-
-            {/* Action 1: Generate All Images if any ungenerated */}
+          {/* Master Batch Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Generate All Batch Visuals */}
             {ungeneratedCount > 0 && (
               <button
                 onClick={onGenerateAllBatchImages}
-                title="Masukkan semua kartu yang belum digenerate ke dalam antrean AI"
-                className="py-2 px-4 text-xs font-mono uppercase font-bold tracking-wider transition-all flex items-center gap-2 bg-stone-900 text-white hover:bg-stone-800 border-2 border-stone-900 active:translate-y-[1px] cursor-pointer"
+                disabled={isQueueActive}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
               >
-                <ImageIcon className="w-3.5 h-3.5" />
+                <Sparkles className="w-4 h-4" />
                 <span>
-                  GENERATE SEMUA {totalCards} GAMBAR (+{formatUsd(totalBatchImagesCostUsd, 4)} / ~{formatIdr(totalBatchImagesCostIdr)})
+                  ⚡ Render Semua {ungeneratedCount} Gambar ({formatUsd(ungeneratedCount * imageTariffUsd, 3)})
                 </span>
               </button>
             )}
 
-            {/* Action 2: Download All PNGs (if images exist) */}
+            {/* Download All Generated Images */}
             {itemsWithImages.length > 0 && (
               <button
                 onClick={onDownloadAllImages}
-                className="py-2 px-3.5 bg-white hover:bg-stone-100 text-stone-900 border-2 border-stone-900 font-mono text-xs uppercase font-bold tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-stone-950 border border-stone-900 font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
+                title="Download seluruh gambar yang sudah siap dalam bentuk batch ZIP"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>DOWNLOAD SEMUA PNG ({itemsWithImages.length} GAMBAR)</span>
+                <Download className="w-4 h-4 text-stone-950" />
+                <span>Unduh ZIP ({itemsWithImages.length} Gambar)</span>
+              </button>
+            )}
+
+            {/* Cancel Active Queue */}
+            {isQueueActive && (
+              <button
+                onClick={onCancelAllQueueTasks}
+                className="px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Batalkan seluruh tugas antrean AI yang sedang berjalan"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Hentikan Antrean</span>
               </button>
             )}
           </div>
@@ -166,6 +171,8 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
             onGenerateImage={onGenerateImageForPrompt}
             onRegenerateImage={onRegenerateImage}
             onRegeneratePrompt={onRegeneratePrompt}
+            onGenerateSeoMetadata={onGenerateSeoMetadata}
+            isGeneratingSeo={generatingSeoCardId === item.id}
             onSelectPromptVersion={onSelectPromptVersion}
             onCancelQueueTask={onCancelQueueTask}
             queueStatus={getCardQueueStatus(item.id)}
@@ -176,4 +183,3 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
     </div>
   );
 };
-

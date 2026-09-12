@@ -82,6 +82,7 @@ export function App() {
     setActivePrompts,
     isGeneratingPrompt,
     taskQueue,
+    generatingSeoCardId,
     getCardQueueStatus,
     cancelQueueTask,
     cancelAllQueueTasks,
@@ -90,6 +91,7 @@ export function App() {
     handleGeneratePrompts,
     handleRegeneratePrompt,
     handleSelectPromptVersion,
+    handleGenerateSeoMetadataForCard,
     handleGenerateImageForPrompt,
     handleGenerateAllBatchImages,
     handleRegenerateImage,
@@ -225,6 +227,8 @@ export function App() {
             onGenerateAllBatchImages={handleGenerateAllBatchImages}
             onRegenerateImage={handleRegenerateImage}
             onRegeneratePrompt={handleRegeneratePrompt}
+            onGenerateSeoMetadata={handleGenerateSeoMetadataForCard}
+            generatingSeoCardId={generatingSeoCardId}
             onSelectPromptVersion={handleSelectPromptVersion}
             onCancelQueueTask={cancelQueueTask}
             onCancelAllQueueTasks={cancelAllQueueTasks}

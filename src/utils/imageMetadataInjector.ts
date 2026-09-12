@@ -447,6 +447,106 @@ function createPngExifChunk(tiffBytes: Uint8Array): Uint8Array {
 }
 
 /**
+ * Strips existing metadata chunks (tEXt, iTXt, zTXt, eXIf, dSIG, prM) from PNG bytes
+ */
+function stripMetadataChunksPng(pngBytes: Uint8Array): { ihdrChunk: Uint8Array; remainingChunks: Uint8Array[] } | null {
+  if (
+    pngBytes.length < 8 ||
+    pngBytes[0] !== 137 ||
+    pngBytes[1] !== 80 ||
+    pngBytes[2] !== 78 ||
+    pngBytes[3] !== 71
+  ) {
+    return null;
+  }
+
+  const metadataChunkTypes = new Set(['tEXt', 'iTXt', 'zTXt', 'eXIf', 'dSIG', 'prM']);
+  const chunks: Uint8Array[] = [];
+  let offset = 8; // skip 8-byte PNG signature
+  let ihdrChunk: Uint8Array | null = null;
+
+  while (offset < pngBytes.length) {
+    if (offset + 8 > pngBytes.length) break;
+    const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
+    const length = view.getUint32(offset, false);
+    const chunkTypeBytes = pngBytes.subarray(offset + 4, offset + 8);
+    const chunkType = String.fromCharCode(...chunkTypeBytes);
+    const totalChunkLen = 12 + length;
+
+    if (offset + totalChunkLen > pngBytes.length) break;
+
+    const chunkData = pngBytes.subarray(offset, offset + totalChunkLen);
+
+    if (chunkType === 'IHDR') {
+      ihdrChunk = chunkData;
+    } else if (!metadataChunkTypes.has(chunkType)) {
+      chunks.push(chunkData);
+    }
+
+    offset += totalChunkLen;
+  }
+
+  if (!ihdrChunk) return null;
+  return { ihdrChunk, remainingChunks: chunks };
+}
+
+/**
+ * Strips existing APP1 (EXIF/XMP) and APP13 (Photoshop IPTC) segments from JPEG bytes
+ */
+function stripMetadataSegmentsJpeg(jpegBytes: Uint8Array): Uint8Array[] | null {
+  if (jpegBytes.length < 2 || jpegBytes[0] !== 0xff || jpegBytes[1] !== 0xd8) {
+    return null;
+  }
+
+  const segments: Uint8Array[] = [];
+  let offset = 2; // skip SOI (0xFF, 0xD8)
+
+  while (offset < jpegBytes.length) {
+    if (jpegBytes[offset] !== 0xff) {
+      segments.push(jpegBytes.subarray(offset));
+      break;
+    }
+
+    const marker = jpegBytes[offset + 1];
+
+    if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) {
+      segments.push(jpegBytes.subarray(offset, offset + 2));
+      offset += 2;
+      if (marker === 0xd9) break;
+      continue;
+    }
+
+    if (marker === 0xda) {
+      segments.push(jpegBytes.subarray(offset));
+      break;
+    }
+
+    if (offset + 4 > jpegBytes.length) {
+      segments.push(jpegBytes.subarray(offset));
+      break;
+    }
+
+    const view = new DataView(jpegBytes.buffer, jpegBytes.byteOffset, jpegBytes.byteLength);
+    const segLen = view.getUint16(offset + 2, false);
+    const totalSegLen = 2 + segLen;
+
+    if (offset + totalSegLen > jpegBytes.length) {
+      segments.push(jpegBytes.subarray(offset));
+      break;
+    }
+
+    // Strip existing APP1 (0xE1) and APP13 (0xED)
+    if (marker !== 0xe1 && marker !== 0xed) {
+      segments.push(jpegBytes.subarray(offset, offset + totalSegLen));
+    }
+
+    offset += totalSegLen;
+  }
+
+  return segments;
+}
+
+/**
  * Injects 3 synchronized metadata layers into a PNG binary byte buffer:
  * - Layer 1: IPTC IIM text chunks + XMP
  * - Layer 2: eXIf chunk with standard IFD0 & Windows XP Tags (UCS-2)
@@ -464,47 +564,90 @@ export function injectMetadataIntoPng(pngBytes: Uint8Array, meta: ImageMetadata)
     return pngBytes;
   }
 
-  // End of IHDR chunk is always at offset 33 (8 sig + 4 len + 4 type + 13 data + 4 crc)
-  const ihdrEndOffset = 33;
-  const author = meta.author || '2D Vector Studio';
-  const software = meta.software || '2D Vector Studio AI Generator';
-  const desc = meta.description || meta.title;
-  const keywordsComma = meta.keywords.join(', ');
+  const cleanTitle = meta.title?.trim() || '2D Vector Art';
+  const desc = meta.description?.trim() || cleanTitle;
+  const author = meta.author?.trim();
+  const software = meta.software?.trim();
+  const validKeywords = (meta.keywords || []).filter((k) => k.trim());
+  const keywordsComma = validKeywords.join(', ');
+
+  const normalizedMeta: ImageMetadata = {
+    ...meta,
+    title: cleanTitle,
+    description: desc,
+  };
 
   // 1. Layer 3: Adobe XMP XML
-  const xmpXml = buildAdobeXmpPacket(meta);
+  const xmpXml = buildAdobeXmpPacket(normalizedMeta);
 
   // 2. Layer 2: EXIF IFD0 TIFF with Windows XP UCS-2 tags
-  const tiffBytes = buildExifTiffBuffer(meta);
+  const tiffBytes = buildExifTiffBuffer(normalizedMeta);
 
   // 3. Construct all metadata chunks to inject right after IHDR
   const chunksToInsert: Uint8Array[] = [
-    createPngTextChunk('Title', meta.title),
+    createPngTextChunk('Title', cleanTitle),
     createPngTextChunk('Description', desc),
-    createPngTextChunk('Keywords', keywordsComma),
-    createPngTextChunk('Author', author),
-    createPngTextChunk('Software', software),
     createPngTextChunk('Comment', desc),
-    createPngExifChunk(tiffBytes), // Layer 2: eXIf chunk
-    createPngItxtChunk(xmpXml),    // Layer 3: Adobe XMP packet
   ];
 
+  if (keywordsComma) {
+    chunksToInsert.push(createPngTextChunk('Keywords', keywordsComma));
+  }
+  if (author) {
+    chunksToInsert.push(createPngTextChunk('Author', author));
+  }
+  if (software) {
+    chunksToInsert.push(createPngTextChunk('Software', software));
+  }
+
+  chunksToInsert.push(createPngExifChunk(tiffBytes)); // Layer 2: eXIf chunk
+  chunksToInsert.push(createPngItxtChunk(xmpXml));    // Layer 3: Adobe XMP packet
+
+  const stripped = stripMetadataChunksPng(pngBytes);
+  const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  if (stripped) {
+    const totalExtraBytes = chunksToInsert.reduce((sum, c) => sum + c.length, 0);
+    const totalRemainingBytes = stripped.remainingChunks.reduce((sum, c) => sum + c.length, 0);
+    const totalLength = signature.length + stripped.ihdrChunk.length + totalExtraBytes + totalRemainingBytes;
+
+    const result = new Uint8Array(totalLength);
+    let currentOffset = 0;
+
+    // 1. Signature
+    result.set(signature, currentOffset);
+    currentOffset += signature.length;
+
+    // 2. IHDR
+    result.set(stripped.ihdrChunk, currentOffset);
+    currentOffset += stripped.ihdrChunk.length;
+
+    // 3. Injected metadata chunks
+    for (const chunk of chunksToInsert) {
+      result.set(chunk, currentOffset);
+      currentOffset += chunk.length;
+    }
+
+    // 4. Remaining image chunks (IDAT, PLTE, pHYs, IEND, etc.)
+    for (const chunk of stripped.remainingChunks) {
+      result.set(chunk, currentOffset);
+      currentOffset += chunk.length;
+    }
+
+    return result;
+  }
+
+  // Fallback if structure parsing failed
+  const ihdrEndOffset = 33;
   const totalExtraBytes = chunksToInsert.reduce((sum, c) => sum + c.length, 0);
   const result = new Uint8Array(pngBytes.length + totalExtraBytes);
-
-  // Copy signature + IHDR
   result.set(pngBytes.subarray(0, ihdrEndOffset), 0);
-
-  // Copy injected chunks
   let currentOffset = ihdrEndOffset;
   for (const chunk of chunksToInsert) {
     result.set(chunk, currentOffset);
     currentOffset += chunk.length;
   }
-
-  // Copy remaining original PNG chunks
   result.set(pngBytes.subarray(ihdrEndOffset), currentOffset);
-
   return result;
 }
 
@@ -523,10 +666,19 @@ export function injectMetadataIntoJpeg(jpegBytes: Uint8Array, meta: ImageMetadat
     return jpegBytes;
   }
 
+  const cleanTitle = meta.title?.trim() || '2D Vector Art';
+  const desc = meta.description?.trim() || cleanTitle;
+
+  const normalizedMeta: ImageMetadata = {
+    ...meta,
+    title: cleanTitle,
+    description: desc,
+  };
+
   const segmentsToInsert: Uint8Array[] = [];
 
   // 1. Layer 2: APP1 EXIF segment [0xFF, 0xE1, len(2), 'Exif\0\0', tiffBytes]
-  const tiffBytes = buildExifTiffBuffer(meta);
+  const tiffBytes = buildExifTiffBuffer(normalizedMeta);
   const exifHeader = encodeUtf8('Exif\0\0');
   const exifPayloadLen = exifHeader.length + tiffBytes.length;
   const app1Exif = new Uint8Array(2 + 2 + exifPayloadLen);
@@ -538,7 +690,7 @@ export function injectMetadataIntoJpeg(jpegBytes: Uint8Array, meta: ImageMetadat
   segmentsToInsert.push(app1Exif);
 
   // 2. Layer 1: APP13 Photoshop 8BIM segment [0xFF, 0xED, len(2), 'Photoshop 3.0\0', 8bimBytes]
-  const iptcBytes = buildIptcIimBuffer(meta);
+  const iptcBytes = buildIptcIimBuffer(normalizedMeta);
   const bimBytes = buildPhotoshop8bimBlock(iptcBytes);
   const psHeader = encodeUtf8('Photoshop 3.0\0');
   const psPayloadLen = psHeader.length + bimBytes.length;
@@ -551,7 +703,7 @@ export function injectMetadataIntoJpeg(jpegBytes: Uint8Array, meta: ImageMetadat
   segmentsToInsert.push(app13Bim);
 
   // 3. Layer 3: APP1 Adobe XMP segment [0xFF, 0xE1, len(2), 'http://ns.adobe.com/xap/1.0/\0', xmpBytes]
-  const xmpXml = buildAdobeXmpPacket(meta);
+  const xmpXml = buildAdobeXmpPacket(normalizedMeta);
   const xmpHeader = encodeUtf8('http://ns.adobe.com/xap/1.0/\0');
   const xmpTextBytes = encodeUtf8(xmpXml);
   const xmpPayloadLen = xmpHeader.length + xmpTextBytes.length;
@@ -562,6 +714,28 @@ export function injectMetadataIntoJpeg(jpegBytes: Uint8Array, meta: ImageMetadat
   app1Xmp.set(xmpHeader, 4);
   app1Xmp.set(xmpTextBytes, 4 + xmpHeader.length);
   segmentsToInsert.push(app1Xmp);
+
+  const stripped = stripMetadataSegmentsJpeg(jpegBytes);
+  if (stripped) {
+    const totalExtraBytes = segmentsToInsert.reduce((sum, s) => sum + s.length, 0);
+    const totalRemainingBytes = stripped.reduce((sum, s) => sum + s.length, 0);
+    const result = new Uint8Array(2 + totalExtraBytes + totalRemainingBytes);
+
+    result[0] = 0xff; result[1] = 0xd8; // SOI
+    let currentOffset = 2;
+
+    for (const seg of segmentsToInsert) {
+      result.set(seg, currentOffset);
+      currentOffset += seg.length;
+    }
+
+    for (const seg of stripped) {
+      result.set(seg, currentOffset);
+      currentOffset += seg.length;
+    }
+
+    return result;
+  }
 
   // Construct new JPEG binary right after SOI marker (offset 2)
   const totalExtraBytes = segmentsToInsert.reduce((sum, s) => sum + s.length, 0);

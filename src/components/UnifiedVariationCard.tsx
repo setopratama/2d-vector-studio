@@ -8,6 +8,7 @@ import {
   Download,
   RefreshCw,
   Sparkles,
+  Zap,
   Maximize2,
   Database,
   Star,
@@ -33,6 +34,8 @@ interface UnifiedVariationCardProps {
   onGenerateImage: (promptId: string) => void;
   onRegenerateImage: (promptId: string) => void;
   onRegeneratePrompt?: (promptId: string) => void;
+  onGenerateSeoMetadata?: (promptId: string) => void;
+  isGeneratingSeo?: boolean;
   onSelectPromptVersion?: (promptId: string, versionIndex: number) => void;
   onCancelQueueTask?: (promptId: string) => void;
   queueStatus?: {
@@ -52,6 +55,8 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   onGenerateImage,
   onRegenerateImage,
   onRegeneratePrompt,
+  onGenerateSeoMetadata,
+  isGeneratingSeo = false,
   onSelectPromptVersion,
   onCancelQueueTask,
   queueStatus,
@@ -59,8 +64,8 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
 }) => {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedTitle, setCopiedTitle] = useState(false);
+  const [copiedDesc, setCopiedDesc] = useState(false);
   const [copiedKeywordsComma, setCopiedKeywordsComma] = useState(false);
-  const [copiedKeywordsAll, setCopiedKeywordsAll] = useState(false);
   const [copiedVersionIdx, setCopiedVersionIdx] = useState<number | null>(null);
   const [isDownloadingWithMeta, setIsDownloadingWithMeta] = useState(false);
   const [activeVersionIndex, setActiveVersionIndex] = useState<number>(
@@ -107,11 +112,13 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   const activePromptVersion = promptVersions[activePromptVersionIndex] || promptVersions[0];
 
   // Active SEO Title & Keywords
-  const activeStockTitle = activePromptVersion.adobeStockTitle || item.adobeStockTitle || item.title;
-  const activeKeywords = activePromptVersion.keywords || item.keywords || [
-    ...item.rawIdea.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
-    'vector', 'illustration', 'icon', 'graphic', 'isolated', 'white background', '2d vector'
-  ];
+  const activeStockTitle = activePromptVersion.adobeStockTitle || item.adobeStockTitle || '';
+  const activeKeywords = (activePromptVersion.keywords || item.keywords || []) as string[];
+  const hasSeoMetadata = Boolean(
+    activeStockTitle.trim() &&
+    Array.isArray(activeKeywords) &&
+    activeKeywords.length > 0
+  );
 
   const titleLength = activeStockTitle.length;
   const isTitleValidLength = titleLength <= 120;
@@ -123,23 +130,25 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   };
 
   const handleCopyTitle = async () => {
+    if (!activeStockTitle) return;
     await navigator.clipboard.writeText(activeStockTitle);
     setCopiedTitle(true);
     setTimeout(() => setCopiedTitle(false), 2000);
   };
 
+  const handleCopyDesc = async () => {
+    if (!activeStockTitle) return;
+    await navigator.clipboard.writeText(activeStockTitle);
+    setCopiedDesc(true);
+    setTimeout(() => setCopiedDesc(false), 2000);
+  };
+
   const handleCopyKeywordsComma = async () => {
+    if (activeKeywords.length === 0) return;
     const commaSeparated = activeKeywords.join(', ');
     await navigator.clipboard.writeText(commaSeparated);
     setCopiedKeywordsComma(true);
     setTimeout(() => setCopiedKeywordsComma(false), 2000);
-  };
-
-  const handleCopyKeywordsAll = async () => {
-    const text = `Title: ${activeStockTitle}\n\nKeywords: ${activeKeywords.join(', ')}`;
-    await navigator.clipboard.writeText(text);
-    setCopiedKeywordsAll(true);
-    setTimeout(() => setCopiedKeywordsAll(false), 2000);
   };
 
   const handleCopySpecificVersion = async (text: string, vIdx: number) => {
@@ -150,17 +159,17 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
 
   // Download with binary metadata injection and SEO Title naming
   const handleDownloadWithMetadata = async () => {
-    if (!activeImage) return;
+    if (!activeImage || !hasSeoMetadata) return;
     setIsDownloadingWithMeta(true);
     try {
       const downloadUrl = activeImage.dataUrl || (activeImage.imagePath ? (activeImage.imagePath.startsWith('/') ? activeImage.imagePath : `/${activeImage.imagePath}`) : '');
-      const fileName = sanitizeSeoFileName(activeStockTitle);
+      const fileName = sanitizeSeoFileName(activeStockTitle || item.title);
 
       const { downloadSingleImage } = await import('../utils/downloadHelper');
       await downloadSingleImage(downloadUrl, fileName, {
         title: activeStockTitle,
         keywords: activeKeywords,
-        description: activePromptVersion.optimizedPrompt,
+        description: activeStockTitle,
         author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
         software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
         credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
@@ -174,12 +183,14 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   const handleStandardDownload = async () => {
     if (!activeImage) return;
     const downloadUrl = activeImage.dataUrl || (activeImage.imagePath ? (activeImage.imagePath.startsWith('/') ? activeImage.imagePath : `/${activeImage.imagePath}`) : '');
-    const fileName = sanitizeSeoFileName(activeStockTitle);
+    const seoTitle = activeStockTitle || item.title || item.rawIdea;
+    const fileName = sanitizeSeoFileName(seoTitle);
 
     const { downloadSingleImage } = await import('../utils/downloadHelper');
     await downloadSingleImage(downloadUrl, fileName, {
-      title: activeStockTitle,
-      keywords: activeKeywords,
+      title: seoTitle,
+      keywords: activeKeywords.length > 0 ? activeKeywords : undefined,
+      description: seoTitle,
       author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
       software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
       credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
@@ -327,7 +338,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
             {activePromptVersion.negativePrompt && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-[11px] font-mono text-stone-600 font-bold uppercase tracking-wider">
-                  <span>Negative Prompt (Pencegah Foto / 3D):</span>
+                  <span>Negative Prompt (Pencegah Foto / 3D / Sprawl):</span>
                 </div>
                 <div className="p-2.5 bg-stone-100 border border-stone-300 text-stone-700 font-mono text-[11px] leading-snug select-all">
                   {activePromptVersion.negativePrompt}
@@ -336,96 +347,74 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
             )}
 
             {/* ============================================================== */}
-            {/* FITUR BARU: ADOBE STOCK SEO TITLE & KEYWORDS METADATA          */}
+            {/* FITUR METADATA: ADOBE STOCK SEO TITLE & KEYWORDS               */}
             {/* ============================================================== */}
-            <div className="p-3.5 bg-amber-50/50 border-2 border-amber-300/80 space-y-3 shadow-2xs">
-              {/* Author Info Bar */}
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] font-mono text-amber-950 flex-wrap">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-bold uppercase">Author:</span>
-                  <span className="bg-white px-2 py-0.5 border border-amber-300 font-bold text-stone-900">
-                    {contributorProfile?.includeAuthor ? (contributorProfile.authorName || 'Vector Artist') : '(Dikosongkan)'}
-                  </span>
-                  <span className="text-stone-400">•</span>
-                  <span className="text-stone-600">
-                    Tool: <strong>{contributorProfile?.includeSoftware ? (contributorProfile.softwareName || 'Adobe Illustrator') : '(Dikosongkan)'}</strong>
-                  </span>
-                </div>
-
-                {onOpenProfileSettings && (
-                  <button
-                    type="button"
-                    onClick={onOpenProfileSettings}
-                    className="text-[10px] text-amber-900 hover:text-stone-900 underline font-bold transition-colors cursor-pointer"
-                    title="Ubah nama author dan setting metadata kontributor"
-                  >
-                    Ubah Profil Kontributor ⚙️
-                  </button>
-                )}
-              </div>
-
-              {/* 1. Adobe Stock Title */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-amber-700" />
-                    <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
-                      Adobe Stock SEO Title (English):
+            {hasSeoMetadata ? (
+              <div className="p-3.5 bg-amber-50/50 border-2 border-amber-300/80 space-y-3 shadow-2xs">
+                {/* Author Info Bar */}
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] font-mono text-amber-950 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold uppercase">Author:</span>
+                    <span className="bg-white px-2 py-0.5 border border-amber-300 font-bold text-stone-900">
+                      {contributorProfile?.includeAuthor && contributorProfile.authorName?.trim() ? contributorProfile.authorName.trim() : '(Dikosongkan)'}
                     </span>
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.2 font-bold ${
-                        isTitleValidLength
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : 'bg-red-100 text-red-800 border border-red-300'
-                      }`}
-                    >
-                      {titleLength}/120 CHARS
+                    <span className="text-stone-400">•</span>
+                    <span className="text-stone-600">
+                      Tool: <strong>{contributorProfile?.includeSoftware && contributorProfile.softwareName?.trim() ? contributorProfile.softwareName.trim() : '(Dikosongkan)'}</strong>
                     </span>
                   </div>
 
-                  <button
-                    onClick={handleCopyTitle}
-                    className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
-                  >
-                    {copiedTitle ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-600" />
-                        <span className="text-emerald-700">Disalin</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3 text-amber-700" />
-                        <span>Salin Title</span>
-                      </>
+                  <div className="flex items-center gap-2">
+                    {onGenerateSeoMetadata && (
+                      <button
+                        type="button"
+                        onClick={() => onGenerateSeoMetadata(item.id)}
+                        disabled={isGeneratingSeo || isProcessing || isQueued}
+                        className="text-[10px] text-amber-900 hover:text-stone-900 font-bold flex items-center gap-1 transition-colors cursor-pointer border border-amber-300 bg-white px-1.5 py-0.5 hover:bg-amber-100"
+                        title="Re-generate SEO metadata kartu ini"
+                      >
+                        <RefreshCw className={`w-2.5 h-2.5 ${isGeneratingSeo ? 'animate-spin' : ''}`} />
+                        <span>{isGeneratingSeo ? 'Memproses...' : '🔄 Perbarui SEO'}</span>
+                      </button>
                     )}
-                  </button>
-                </div>
 
-                <div className="p-2.5 bg-white border border-amber-300 text-stone-900 font-mono text-xs font-medium select-all leading-relaxed">
-                  {activeStockTitle}
-                </div>
-              </div>
-
-              {/* 2. Adobe Stock Keywords Cloud */}
-              <div className="space-y-2 pt-1 border-t border-amber-200">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-amber-700" />
-                    <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
-                      Keywords Microstock:
-                    </span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-200 text-amber-900">
-                      {activeKeywords.length} TAGS • MAX 2 KATA
-                    </span>
+                    {onOpenProfileSettings && (
+                      <button
+                        type="button"
+                        onClick={onOpenProfileSettings}
+                        className="text-[10px] text-amber-900 hover:text-stone-900 underline font-bold transition-colors cursor-pointer"
+                        title="Ubah nama author dan setting metadata kontributor"
+                      >
+                        Profil ⚙️
+                      </button>
+                    )}
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-1.5">
+                {/* 1. Adobe Stock Title */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
+                        Adobe Stock SEO Title (English):
+                      </span>
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.2 font-bold ${
+                          isTitleValidLength
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}
+                      >
+                        {titleLength}/120 CHARS
+                      </span>
+                    </div>
+
                     <button
-                      onClick={handleCopyKeywordsComma}
+                      onClick={handleCopyTitle}
                       className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
-                      title="Salin semua keyword dipisahkan koma untuk form upload microstock"
                     >
-                      {copiedKeywordsComma ? (
+                      {copiedTitle ? (
                         <>
                           <Check className="w-3 h-3 text-emerald-600" />
                           <span className="text-emerald-700">Disalin</span>
@@ -433,44 +422,140 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       ) : (
                         <>
                           <Copy className="w-3 h-3 text-amber-700" />
-                          <span>Salin Koma</span>
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={handleCopyKeywordsAll}
-                      className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
-                      title="Salin Title + Semua Keywords sekaligus"
-                    >
-                      {copiedKeywordsAll ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          <span className="text-emerald-700">Semua Disalin</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 text-amber-700" />
-                          <span>Salin Semua</span>
+                          <span>Salin Title</span>
                         </>
                       )}
                     </button>
                   </div>
+
+                  <div className="p-2.5 bg-white border border-amber-300 text-stone-900 font-mono text-xs font-medium select-all leading-relaxed">
+                    {activeStockTitle}
+                  </div>
                 </div>
 
-                {/* Keywords Tag Cloud */}
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-white border border-amber-300">
-                  {activeKeywords.map((tag, tIdx) => (
-                    <span
-                      key={tIdx}
-                      className="text-[10px] font-mono px-2 py-0.5 bg-stone-100 hover:bg-amber-100 text-stone-800 border border-stone-200 rounded-none cursor-default select-all"
+                {/* 2. Metadata Description / Caption */}
+                <div className="space-y-1.5 pt-1 border-t border-amber-200">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
+                        Metadata Description (English):
+                      </span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                        SESUAI TITLE
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleCopyDesc}
+                      className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+                      title="Salin teks description yang disematkan ke IPTC/EXIF/XMP"
                     >
-                      {tag}
-                    </span>
-                  ))}
+                      {copiedDesc ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-700">Disalin</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-amber-700" />
+                          <span>Salin Deskripsi</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="p-2.5 bg-white border border-amber-300 text-stone-800 font-mono text-xs font-medium select-all leading-relaxed">
+                    {activeStockTitle}
+                  </div>
+                </div>
+
+                {/* 3. Adobe Stock Keywords Cloud */}
+                <div className="space-y-2 pt-1 border-t border-amber-200">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
+                        Keywords Microstock:
+                      </span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-200 text-amber-900">
+                        {activeKeywords.length} TAGS • MAX 2 KATA
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={handleCopyKeywordsComma}
+                        className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+                        title="Salin semua keyword dipisahkan koma untuk form upload microstock"
+                      >
+                        {copiedKeywordsComma ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-700">Disalin</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 text-amber-700" />
+                            <span>Salin Koma</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Keywords Tag Cloud */}
+                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-white border border-amber-300">
+                    {activeKeywords.map((tag, tIdx) => (
+                      <span
+                        key={tIdx}
+                        className="text-[10px] font-mono px-2 py-0.5 bg-stone-100 hover:bg-amber-100 text-stone-800 border border-stone-200 rounded-none cursor-default select-all"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* State Kosong (Mode Hemat Token): Banner Rapi + Tombol On-Demand Generator */
+              <div className="p-3.5 bg-amber-50/40 border-2 border-dashed border-amber-300 space-y-2.5 shadow-2xs font-mono">
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] text-amber-950 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span className="font-bold uppercase">Metadata SEO Adobe Stock &amp; Tags Microstock</span>
+                  </div>
+                  <span className="text-[10px] bg-stone-200 text-stone-700 px-1.5 py-0.2 font-bold uppercase">
+                    Belum Dibuat (Mode Hemat Token)
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-amber-900 leading-relaxed">
+                  Mode hemat token aktif. Generate Judul SEO (≤120 kark) &amp; 30–48 Tags Microstock khusus kartu ini saat Anda membutuhkannya.
+                </p>
+
+                {onGenerateSeoMetadata && (
+                  <button
+                    type="button"
+                    onClick={() => onGenerateSeoMetadata(item.id)}
+                    disabled={isGeneratingSeo || isProcessing || isQueued}
+                    className="w-full py-2 px-3 bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-amber-300 border border-stone-900 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                  >
+                    {isGeneratingSeo ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                        <span>Membuat Judul SEO &amp; 48 Tags...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        <span>⚡ Generate SEO Metadata (Title + 48 Tags) (~Rp 0,3)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Riwayat Timeline Versi Prompt (Scrollable Container) */}
             {promptVersions.length > 1 && (
@@ -492,7 +577,6 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       hour: '2-digit',
                       minute: '2-digit',
                     });
-
                     return (
                       <div
                         key={v.version}

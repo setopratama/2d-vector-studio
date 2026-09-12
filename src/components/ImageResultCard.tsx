@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { PromptItem, GeneratedImageVersion } from '../types/prompt';
 import { Download, RefreshCw, Copy, Check, Folder, Calendar, Star, Maximize2, Layers, Grid, LayoutList } from 'lucide-react';
 import { formatUsd, formatIdr, PRICING_CONFIG } from '../utils/costCalculator';
+import { useContributorProfile } from '../hooks/useContributorProfile';
 
 interface ImageResultCardProps {
   promptItems: PromptItem[];
@@ -41,16 +42,23 @@ export const ImageResultCard: React.FC<ImageResultCardProps> = ({
     }, 2000);
   };
 
+  const { profile: contributorProfile } = useContributorProfile();
+
   const handleDownloadSingle = async (item: PromptItem, img: GeneratedImageVersion) => {
     const downloadUrl = img.dataUrl || (img.imagePath ? (img.imagePath.startsWith('/') ? img.imagePath : `/${img.imagePath}`) : '');
     const { sanitizeSeoFileName } = await import('../utils/imageMetadataInjector');
     const fileName = sanitizeSeoFileName(item.adobeStockTitle || item.title);
 
     const { downloadSingleImage } = await import('../utils/downloadHelper');
+    const seoTitle = item.adobeStockTitle || item.title;
     await downloadSingleImage(downloadUrl, fileName, {
-      title: item.adobeStockTitle || item.title,
+      title: seoTitle,
       keywords: item.keywords || [],
-      description: item.optimizedPrompt,
+      description: seoTitle,
+      author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
+      software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
+      credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
+      source: contributorProfile?.includeSource ? (contributorProfile.source || undefined) : undefined,
     });
   };
 

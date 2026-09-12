@@ -44,6 +44,13 @@ export const STYLE_PRESETS: StylePreset[] = [
     description: 'High-contrast negative space cutout, solid bold shapes, zero shading',
     promptSnippet: 'high-contrast stencil silhouette, sharp negative space cutouts, solid black vector shapes, isolated on pure white background, instant svg trace',
   },
+  {
+    id: 'premium-line-art',
+    name: 'Premium Line Art Icon',
+    category: 'monochrome',
+    description: 'Clean monoline SVG style, uniform stroke, 85-90% detail simplification, generous negative space, coloring book & printable ready',
+    promptSnippet: 'minimal premium line art icon of [subject], clean uniform black monoline stroke, 85% simplified essential silhouette, zero color fill, 75% negative white space, smooth vector outlines, isolated on pure white background, svg coloring page printable ready',
+  },
 ];
 
 export interface StyleVariationAngle {
@@ -99,6 +106,14 @@ export const PRESET_VARIATIONS: Record<string, StyleVariationAngle[]> = {
     { style: 'Geometric Stencil Mask', suffix: 'geometric stencil cutout lines, bold solid black positive shapes, instant svg trace' },
     { style: 'Dual-Layer Stencil', suffix: 'two-tone solid stencil cutout, sharp vector edges, distinct negative space separations' },
   ],
+  'premium-line-art': [
+    { style: 'Minimalist Icon Silhouette', suffix: 'minimalist line art icon silhouette, clean uniform monoline outlines, 85% detail reduction, generous negative space, svg icon ready' },
+    { style: 'Coloring Book Printable', suffix: 'coloring book printable line art outline, crisp uniform stroke thickness, zero fill, clean closed vector paths, white background' },
+    { style: 'Architectural / Object Monoline', suffix: 'architectural editorial line art icon, essential structural outlines, precision vector geometry, pure white background' },
+    { style: 'Laser Cut / Cricut Ready', suffix: 'laser cut ready vector line art, continuous unbroken clean contours, uniform medium stroke, zero shading, svg asset' },
+    { style: 'Museum / Editorial Guide Icon', suffix: 'heritage editorial guide icon, elegant minimalist monoline drawing, centered composition, 75% negative space' },
+    { style: 'Sticker Line Art Outline', suffix: 'minimal line art sticker outline, bold uniform contour line, clean vector intersections, instant svg trace ready' },
+  ],
 };
 
 export const TARGET_ENGINES: { id: TargetEngine; name: string; badge: string; description: string }[] = [
@@ -117,6 +132,8 @@ export const SAMPLE_IDEAS = [
   'minimalist mountain pine badge',
   'retro space astronaut sticker',
   'origami bird monoline logo',
+  'minimalist architectural landmark icon',
+  'botanical monstera line art icon',
 ];
 
 export const DEFAULT_NEGATIVE_PROMPT_COLOR =

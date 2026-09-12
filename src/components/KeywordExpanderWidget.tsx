@@ -70,20 +70,21 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
     } catch (err: any) {
       console.warn('AI Keyword Expander Error:', err);
       setErrorMessage(err.message || 'Gagal mengembangkan keyword.');
-      // Fallback 4 natural subject concepts
+      // Fallback 5 natural subject concepts
       const kw = targetKeyword || 'kopi';
       setConcepts([
         `${kw} hangat cangkir keramik`,
         `${kw} dingin gelas kaca`,
         `${kw} kemasan botol modern`,
-        `${kw} aromatik racikan barista`,
+        `${kw} aromatik biji sangrai`,
+        `${kw} racikan barista klasik`,
       ]);
       setUsage({
         promptTokens: 75,
-        completionTokens: 35,
-        totalTokens: 110,
-        promptCostUsd: '0.000030',
-        promptCostIdr: 'Rp 0,48',
+        completionTokens: 45,
+        totalTokens: 120,
+        promptCostUsd: '0.000035',
+        promptCostIdr: 'Rp 0,56',
       });
     } finally {
       setIsLoading(false);
@@ -124,10 +125,10 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-stone-900">
-              AI Concept Expander (1–2 Kata → 4 Ide Subjek 3–4 Kata)
+              AI Concept Expander (1–2 Kata → 5 Ide Subjek 3–4 Kata)
             </span>
             <span className="hidden sm:inline text-[10px] text-stone-500 ml-2">
-              • Murni tema/objek tanpa bentrok gaya
+              • Murni detail subjek/objek tanpa bentrok gaya
             </span>
           </div>
         </div>
@@ -168,15 +169,15 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
           {isLoading ? (
             <>
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
-              <span>Membuat 4 Ide...</span>
+              <span>Membuat 5 Ide...</span>
             </>
           ) : (
             <>
               <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span>
                 {inputKeyword.trim()
-                  ? `Buat 4 Ide: "${inputKeyword.slice(0, 14)}..."`
-                  : '⚡ Buat 4 Ide Subjek (~Rp 0,5)'}
+                  ? `Buat 5 Ide: "${inputKeyword.slice(0, 14)}..."`
+                  : '⚡ Buat 5 Ide Subjek (~Rp 0,5)'}
               </span>
             </>
           )}
@@ -191,13 +192,13 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
         </div>
       )}
 
-      {/* 4 Generated Concepts Cards Grid */}
+      {/* 5 Generated Concepts Cards Grid */}
       {concepts.length > 0 && (
         <div className="space-y-2.5 pt-1">
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-stone-800 uppercase flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-emerald-500 inline-block"></span>
-              4 Referensi Subjek Alami Siap Pakai:
+              5 Referensi Subjek Alami Siap Pakai:
             </span>
             <button
               type="button"
@@ -206,11 +207,11 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
               className="text-[10px] text-stone-600 hover:text-stone-900 underline flex items-center gap-1 cursor-pointer"
             >
               <RefreshCw className={`w-2.5 h-2.5 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Acak 4 Ide Baru</span>
+              <span>Acak 5 Ide Baru</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {concepts.map((concept, idx) => {
               const wordCount = concept.trim().split(/\s+/).filter(Boolean).length;
               const isApplied = appliedIndex === idx;
@@ -285,7 +286,7 @@ export const KeywordExpanderWidget: React.FC<KeywordExpanderWidgetProps> = ({
                 className="px-2.5 py-1 bg-stone-800 hover:bg-stone-900 text-white font-bold uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
               >
                 <Plus className="w-3 h-3" />
-                <span>Masukkan Semua 4 Ide ke List Pack</span>
+                <span>Masukkan Semua 5 Ide ke List Pack</span>
               </button>
             )}
 

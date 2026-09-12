@@ -122,6 +122,9 @@ tmp/
 *.tmp
 *.bak
 
-# AI agent local metadata
+# AI agent local metadata & tooling artifacts
 .agents/local/
 .gemini/
+graphify-out/
+.graphify/
+
