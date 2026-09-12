@@ -123,7 +123,7 @@ GPTIMAGEGENERATE/
 │   ├── prompt_studio.db        # File Database SQLite Lokal (Drizzle ORM)
 │   ├── logs/                   # Log error sistem harian (error_YYYY-MM-DD.log)
 │   └── outputs/                # File gambar tersimpan berdasarkan tanggal generate
-│       └── YYYY-MM-DD/         # Subfolder tanggal (misal: 2026-09-12/img_xxx_v1.png)
+│       └── YYYY-MM-DD/         # Subfolder tanggal (misal: 2026-09-12/img-xxx-v1.png)
 ├── server/                     # Backend Fastify + SQLite
 │   ├── index.ts                # Server entry point (Port 3001, BodyLimit 50MB)
 │   ├── db/

@@ -59,8 +59,11 @@ Panduan lengkap langkah demi langkah untuk menggunakan **Agentic AI 2D Vector St
 
 ---
 
-### Langkah 4: Meninjau Pra-Estimasi Token & Biaya
+### Langkah 4: Meninjau Pra-Estimasi Token & Saklar Metadata SEO
 - Widget **Pra-Estimasi Biaya Transparan** akan menghitung perkiraan token input dan output serta biaya DeepSeek v4 Flash dan GPT Image 2.5 secara terpisah dalam satuan USD dan Rupiah (kurs dinamis).
+- **Checklist Metadata SEO (Default: Non-Aktif)**:
+  - Tersedia opsi centang `[ ] Buat Sekaligus Metadata (Title, Deskripsi/Stock Title & Keywords)`.
+  - Biarkan tidak dicentang jika hanya membutuhkan prompt visual 2D murni untuk menghemat token output LLM (~60 tokens vs ~200 tokens) dan biaya API.
 - Tekan tombol **`[ GENERATE PROMPT ]`** untuk memulai ekspansi prompt.
 
 ---
@@ -73,13 +76,13 @@ Panduan lengkap langkah demi langkah untuk menggunakan **Agentic AI 2D Vector St
 ---
 
 ### Langkah 6: Mengatur Profil Kontributor & Download Ber-metadata
-1. Klik tombol **`[ 👤 Author: ... ]`** di Navbar atas untuk mengatur:
-   - **Nama Pembuat (Author / Artist)**: Nama Anda atau brand studio (misal: *Seto Pratama Studio*).
-   - **Nama Perangkat Lunak (Software)**: Default *Adobe Illustrator* (tanpa kata AI).
-   - **Credit / Copyright**: Hak cipta aset.
+1. Klik tombol **`[ 👤 Author: ... ]`** di Navbar atas untuk mengatur profil kontributor:
+   - **Checklist Granular Pengabaian**: Tiap field (*Author/Artist*, *Software*, *Credit*, *Source*) memiliki saklar checklist sendiri.
+   - **Zero-Injection**: Field yang checklist-nya dinonaktifkan / dikosongkan **tidak akan disuntikkan sama sekali ke dalam metadata gambar**.
+   - Dilengkapi tombol praktis: **Centang Semua** dan **Kosongkan Semua**.
 2. Klik tombol **`[ ⬇️ PNG ]`** pada kartu untuk mengunduh gambar:
-   - File PNG otomatis terinjeksi **metadata 3-lapisan (IPTC IIM, EXIF IFD0, Adobe XMP)**.
-   - Nama file otomatis menggunakan **Judul SEO Adobe Stock** yang bersih tanpa suffix `1x1` (misal: `vintage_coffee_roastery_badge_isolated_on_white_background.png`).
+   - File PNG otomatis terinjeksi **metadata 3-lapisan (IPTC IIM, EXIF IFD0, Adobe XMP)** sesuai profil aktif.
+   - Nama file otomatis diformat menggunakan **kebab-case murni dengan tanda hubung (`-`)** yang bersih tanpa underscore `_` dan tanpa label `1x1` (misal: `vintage-coffee-badge-isolated-on-white-background.png`).
 3. Anda juga dapat menggunakan tombol **`[ DOWNLOAD SEMUA PNG ]`** untuk mengunduh seluruh hasil batch sekaligus secara sekuensial.
 
 ---
