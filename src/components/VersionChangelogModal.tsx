@@ -17,7 +17,7 @@ interface VersionChangelogModalProps {
   onEnableAllFeatures: () => void;
 }
 
-export const APP_VERSION = 'v1.3.0';
+export const APP_VERSION = 'v1.3.1';
 
 export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
   isOpen,
@@ -161,28 +161,51 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
               <span>Riwayat Rilis &amp; Catatan Pembaruan (Changelog)</span>
             </div>
 
-            {/* Version 1.3.0 */}
+            {/* Version 1.3.1 */}
             <div className="border border-stone-900 bg-white p-4 space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-stone-900 text-white text-xs font-bold">
-                    v1.3.0
+                    v1.3.1
                   </span>
                   <span className="text-xs font-bold text-stone-900">
-                    Smart Concept Expander &amp; Clean Naming
+                    Premium Line Art Icon &amp; On-Demand SEO Generator
                   </span>
                 </div>
                 <span className="text-[10px] text-stone-500">September 2026</span>
               </div>
               <ul className="text-[11px] text-stone-700 space-y-1 font-sans list-disc list-inside">
                 <li>
-                  <strong>AI Concept &amp; Keyword Expander:</strong> Mengembangkan 1–2 kata dasar menjadi 4 ide subjek netral (3–4 kata) tanpa bertabrakan dengan gaya vektor.
+                  <strong>Gaya ke-7 Premium Line Art Icon:</strong> Mandat mutlak zero-color fill, uncolored coloring-book interior, pure black outlines, dan simplifikasi siluet 85–90% untuk printable &amp; microstock SVG.
                 </li>
                 <li>
-                  <strong>Pembersihan Penamaan File:</strong> Menghapus teks <code className="bg-stone-100 px-1">1x1</code> secara menyeluruh dari nama file download &amp; simpanan.
+                  <strong>⚡ Generate SEO Metadata On-Demand:</strong> Banner tombol per kartu untuk men-generate Adobe Stock SEO Title dan 48 Tags Keyword tanpa merender ulang prompt visual.
                 </li>
                 <li>
-                  <strong>Modal Versi &amp; Feature Switcher:</strong> Kemudahan beralih antara Mode Lengkap vs Mode Klasik v1.0.0.
+                  <strong>Sinkronisasi Presisi Metadata Biner:</strong> Title &amp; Description disinkronkan langsung ke judul SEO bahasa Inggris pada IPTC, EXIF, dan XMP.
+                </li>
+              </ul>
+            </div>
+
+            {/* Version 1.3.0 */}
+            <div className="border border-stone-200 bg-stone-50 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-stone-700 text-white text-xs font-bold">
+                    v1.3.0
+                  </span>
+                  <span className="text-xs font-bold text-stone-800">
+                    Smart Concept Expander &amp; Clean Naming
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500">September 2026</span>
+              </div>
+              <ul className="text-[11px] text-stone-600 space-y-1 font-sans list-disc list-inside">
+                <li>
+                  <strong>AI Concept &amp; Keyword Expander:</strong> Mengembangkan 1–2 kata dasar menjadi 5 ide subjek netral (3–4 kata) tanpa bertabrakan dengan gaya vektor.
+                </li>
+                <li>
+                  <strong>Pembersihan Penamaan File:</strong> Menghapus teks underscore <code className="bg-stone-100 px-1">_</code> dan rasio <code className="bg-stone-100 px-1">1x1</code> secara menyeluruh.
                 </li>
               </ul>
             </div>
@@ -191,7 +214,7 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
             <div className="border border-stone-200 bg-stone-50 p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-stone-700 text-white text-xs font-bold">
+                  <span className="px-2 py-0.5 bg-stone-600 text-white text-xs font-bold">
                     v1.2.0
                   </span>
                   <span className="text-xs font-bold text-stone-800">

@@ -8,7 +8,8 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 | Versi Tag | Tanggal Rilis | Status | Sorotan Utama |
 |---|---|---|---|
-| **`v1.3.0`** | September 2026 | **Aktif (Latest)** | AI Concept Expander (1–2 kata → 4 ide subjek 3–4 kata), Pembersihan nama file tanpa `1x1`, Modal Versi & Feature Switcher. |
+| **`v1.3.1`** | September 2026 | **Aktif (Latest)** | Gaya ke-7 **Premium Line Art Icon** (Mandat Zero-Color Fill & Coloring Book Printable), **On-Demand SEO Metadata Generator** per kartu, Sinkronisasi Title/Description biner. |
+| **`v1.3.0`** | September 2026 | Stabil | AI Concept Expander (1–2 kata → 5 ide subjek 3–4 kata), Pembersihan nama file spasi alami tanpa underscore `_` & `1x1`, Modal Versi & Feature Switcher. |
 | **`v1.2.0`** | September 2026 | Stabil | Auto-Runner Wizard (batch sekuensial 1–50), Logging Error harian terpusat, Kurs USD/IDR dinamis via API. |
 | **`v1.1.0`** | September 2026 | Stabil | Judul SEO Adobe Stock (120 char), 10–48 Keywords microstock, Injektor metadata biner 3-layer murni (IPTC/EXIF/XMP), Profil Kontributor. |
 | **`v1.0.0`** | September 2026 | Stabil | Initial Release: Studio lokal Fastify + SQLite, 5 Card Batch Grid, Pra-estimasi token terpisah. |
@@ -17,7 +18,25 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 ## 🚀 Rincian Catatan Rilis per Versi
 
-### Versi 1.3.0 — *Smart Concept Expander, Clean Naming & Granular Metadata Controls* (Versi Aktif)
+### Versi 1.3.1 — *Premium Line Art Icon, On-Demand SEO Generator & Binary Metadata Precision* (Versi Aktif)
+- **🎨 Penambahan Preset Gaya ke-7: Premium Line Art Icon (`premium-line-art`)**:
+  - Menyediakan preset gaya ke-7 yang dirancang khusus untuk icon vektor SVG minimalis, aset komersial microstock, stiker line art, dan buku mewarnai (*coloring page printable*).
+  - **Mandat Mutlak Zero-Color Fill**: Otomatis meng-override mode warna menjadi uncolored line art pada backend prompt engine, mencegah kebocoran istilah warna (seperti *"vibrant flat solid green fill"*).
+  - **Karakteristik Visual Terkunci**: Garis monoline hitam pekat murni (*pure black outlines*), interior putih bersih tanpa warna (*uncolored coloring-book interior*), 85–90% simplifikasi siluet, dan ~70–75% *negative white space*.
+  - **6 Variasi Sudut Komposisi**: *Minimalist Icon Silhouette*, *Detailed Structural Outline*, *Bold Geometric Monoline*, *Symmetrical Centered Icon*, *Dynamic Diagonal Angle*, dan *Minimalist Emblem Crest*.
+  - **Dedicated Anti-Color Negative Prompt & Post-Sanitizer**: Filter regex otomatis yang mensterilkan kata pengisi warna menjadi `zero color fill, uncolored white interior`.
+- **⚡ Tombol Generate SEO Metadata On-Demand per Kartu**:
+  - Jika pembuatan prompt awal dilakukan dengan saklar metadata non-aktif, setiap kartu variasi kini menampilkan banner rapi dengan tombol **`[ ⚡ Generate SEO Metadata (Title + 48 Tags) ]`** (~Rp 0,3).
+  - Tombol ini memanggil endpoint `/api/generate-prompt` dengan `includeMetadata: true` untuk mengisi Title bahasa Inggris dan 48 tags keyword microstock secara mandiri tanpa menimpa atau merusak teks prompt visual 2D yang sudah ada.
+- **🔒 Presisi Injeksi Metadata Biner & Sinkronisasi Title/Description**:
+  - Title dan Description disinkronkan secara presisi langsung ke Judul SEO Adobe Stock bahasa Inggris pada metadata IPTC, EXIF XPTitle/XPComment, dan XMP `dc:title`/`dc:description`.
+  - Pembersihan (*stripping*) segmen lama pada file PNG (`tEXt`/`iTXt`) dan JPEG (`APP1`/`APP13`) sebelum injeksi baru untuk mencegah bentrok metadata.
+- **🧹 Penyempurnaan Aksi Salin Keywords**:
+  - Membersihkan tombol salin keyword pada kartu: mempertahankan tombol tunggal **`[ 📋 Salin Koma ]`** yang rapi dan menghapus tombol duplikat.
+
+---
+
+### Versi 1.3.0 — *Smart Concept Expander, Clean Naming & Granular Metadata Controls*
 - **🔲 Opsi Checklist Pengosongan/Pengabaian Metadata Gambar (Author, Software, Credit, Source)**:
   - Menyediakan saklar checklist mandiri pada Modal Pengaturan Profil Kontributor untuk 4 field: *Nama Author/Artist*, *Tag Software*, *Credit/Copyright*, dan *Source/Asal Karya*.
   - Jika checklist dinonaktifkan / dikosongkan, tag-tag tersebut **tidak akan disuntikkan sama sekali ke dalam metadata biner file gambar (IPTC, EXIF, XMP)** tanpa memaksa nilai default (*zero fallback injection*).
@@ -27,7 +46,7 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
   - **Status Default: Non-Aktif** untuk menghemat token output LLM (~60 tokens output/variasi vs ~200 tokens) dan mempercepat eksekusi prompt visual 2D murni.
   - Perhitungan live estimasi token & biaya langsung menyesuaikan secara reaktif saat checklist diaktifkan/dinonaktifkan.
 - **🧠 Fitur AI Concept Expander**:
-  - Menyediakan kotak input khusus 1–2 kata dasar (misal: *"kopi susu"*, *"rubah mekanik"*, *"mobil"*) yang otomatis dikembangkan AI menjadi **4 ide subjek/karakter imajinatif netral** (masing-masing tepat 3–4 kata).
+  - Menyediakan kotak input khusus 1–2 kata dasar (misal: *"kopi susu"*, *"rubah mekanik"*, *"mobil"*) yang otomatis dikembangkan AI menjadi **5 ide subjek/karakter imajinatif netral** (masing-masing tepat 3–4 kata).
   - Ide subjek dibuat netral dan bebas label gaya teknis (*flat, stencil, badge*) agar tidak bertabrakan saat dipadukan dengan gaya grafis 2D apa pun.
   - Perhitungan token & biaya transparan (~$0.000030 / Rp 0,48 - Rp 0,55 per run).
 - **🏷️ Pembersihan Nama File (Format Spasi Bersih, Hapus Underscore `_` & Rasio `1x1`/`1:1`)**:
@@ -80,8 +99,11 @@ git checkout v1.1.0
 # 2. Kembali ke Versi 1.2.0 (Sebelum ada AI Expander)
 git checkout v1.2.0
 
-# 3. Kembali ke Versi Terkini (v1.3.0)
+# 3. Kembali ke Versi 1.3.0 (Smart Concept Expander & Granular Metadata)
+git checkout v1.3.0
+
+# 4. Kembali ke Versi Terkini (v1.3.1)
 git checkout main
 # atau
-git checkout v1.3.0
+git checkout v1.3.1
 ```
