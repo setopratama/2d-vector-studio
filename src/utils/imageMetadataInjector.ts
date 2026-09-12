@@ -779,20 +779,33 @@ export function injectImageMetadata(imageBytes: Uint8Array, meta: ImageMetadata)
 
 /**
  * Sanitizes a title into a clean, SEO-friendly file name for microstock portals (using spaces, without 1x1, without underscores, and without illegal filename characters).
+ * Preserves full titles up to 200 characters with word-boundary safe truncation.
  */
-export function sanitizeSeoFileName(title: string, suffix: string = '.png'): string {
+export function sanitizeSeoFileName(title: string, suffix: string = '.png', maxLen: number = 200): string {
   if (!title) return `vector asset ${Date.now()}${suffix}`;
 
-  const clean = title
+  let clean = title
     .toLowerCase()
     .replace(/1\s*[:xX\-_]\s*1/gi, ' ') // remove all variations of 1x1, 1:1, 1-1, 1_1
     .replace(/[_\\/:*?"<>|]+/g, ' ') // convert underscores and illegal filename chars to spaces
     .replace(/[^a-z0-9\s-]+/gi, ' ') // convert punctuation/symbols to spaces
     .replace(/\b1-1\b|\b1x1\b/gi, ' ') // cleanup standalone 1-1 or 1x1
     .replace(/\s+/g, ' ') // collapse multiple spaces into single space
-    .replace(/^[\s-]+|[\s-]+$/g, '') // trim leading/trailing spaces and hyphens
-    .slice(0, 80)
     .trim();
+
+  // If longer than maxLen, truncate safely at the last word boundary before maxLen
+  if (clean.length > maxLen) {
+    const truncated = clean.slice(0, maxLen);
+    const lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > maxLen * 0.7) {
+      clean = truncated.slice(0, lastSpace).trim();
+    } else {
+      clean = truncated.trim();
+    }
+  }
+
+  // Remove any trailing/leading hyphens or spaces
+  clean = clean.replace(/^[\s-]+|[\s-]+$/g, '').trim();
 
   const finalBase = clean || 'vector graphic';
   return finalBase.endsWith(suffix) ? finalBase : `${finalBase}${suffix}`;

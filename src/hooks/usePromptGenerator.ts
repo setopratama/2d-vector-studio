@@ -678,7 +678,7 @@ export function usePromptGenerator() {
         let promptCostIdr = formatIdr(parseFloat(promptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
 
         let adobeStockTitle: string | undefined = includeMetadata
-          ? `${concept.slice(0, 70)} 2D Vector Illustration Icon Isolated on White Background`
+          ? `${concept.trim()} 2D Vector Illustration Icon Isolated on White Background`
           : undefined;
         let keywords: string[] | undefined = includeMetadata
           ? [

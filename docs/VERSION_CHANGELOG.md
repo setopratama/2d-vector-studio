@@ -33,6 +33,10 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
   - Pembersihan (*stripping*) segmen lama pada file PNG (`tEXt`/`iTXt`) dan JPEG (`APP1`/`APP13`) sebelum injeksi baru untuk mencegah bentrok metadata.
 - **🧹 Penyempurnaan Aksi Salin Keywords**:
   - Membersihkan tombol salin keyword pada kartu: mempertahankan tombol tunggal **`[ 📋 Salin Koma ]`** yang rapi dan menghapus tombol duplikat.
+- **🏷️ Perbaikan Bug Export Nama File Gambar SEO Terpotong**:
+  - Memperbaiki fungsi sanitasi nama file (`sanitizeSeoFileName`) agar tidak lagi membatasi panjang nama file secara kaku pada 80 karakter.
+  - Mendukung nama file utuh hingga 200 karakter dengan algoritma *word-boundary safe truncation* (tidak memotong kata di tengah huruf).
+  - Menghapus pemotongan elipsis `...` dari backend prompt engine agar judul Adobe Stock SEO tersimpan utuh dan bersih.
 
 ---
 

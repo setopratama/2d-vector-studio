@@ -210,8 +210,8 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
   } catch (e) {
     const defaultTitle = `${params.rawIdea} 2D flat vector illustration, isolated on pure white background`;
     parsed = {
-      title: params.rawIdea.slice(0, 30),
-      adobeStockTitle: defaultTitle.length > 120 ? defaultTitle.slice(0, 120) : defaultTitle,
+      title: params.rawIdea.length > 30 ? params.rawIdea.slice(0, 30).trim() : params.rawIdea,
+      adobeStockTitle: defaultTitle,
       keywords: ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector'],
       optimizedPrompt: content || params.rawIdea,
       negativePrompt: isLineArt
@@ -241,9 +241,12 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
   }
 
   // Ensure Adobe Stock Title if metadata requested
-  let cleanAdobeStockTitle = parsed.adobeStockTitle || `${params.rawIdea} vector graphic asset, isolated on pure white background`;
-  if (cleanAdobeStockTitle.length > 120) {
-    cleanAdobeStockTitle = cleanAdobeStockTitle.slice(0, 117) + '...';
+  let cleanAdobeStockTitle = String(parsed.adobeStockTitle || `${params.rawIdea} vector graphic asset, isolated on pure white background`).trim();
+  cleanAdobeStockTitle = cleanAdobeStockTitle.replace(/\.{2,}$/, '').trim();
+  if (cleanAdobeStockTitle.length > 200) {
+    const truncated = cleanAdobeStockTitle.slice(0, 200);
+    const lastSpace = truncated.lastIndexOf(' ');
+    cleanAdobeStockTitle = (lastSpace > 140 ? truncated.slice(0, lastSpace) : truncated).trim();
   }
 
   // Ensure Keywords
@@ -398,9 +401,12 @@ Requirement: Generate commercial Adobe Stock SEO Title (70-120 chars) and 30-48 
     parsed = {};
   }
 
-  let cleanAdobeStockTitle = parsed.adobeStockTitle || `${params.rawIdea} 2D vector graphic asset icon, isolated on white background`;
-  if (cleanAdobeStockTitle.length > 120) {
-    cleanAdobeStockTitle = cleanAdobeStockTitle.slice(0, 117) + '...';
+  let cleanAdobeStockTitle = String(parsed.adobeStockTitle || `${params.rawIdea} 2D vector graphic asset icon, isolated on white background`).trim();
+  cleanAdobeStockTitle = cleanAdobeStockTitle.replace(/\.{2,}$/, '').trim();
+  if (cleanAdobeStockTitle.length > 200) {
+    const truncated = cleanAdobeStockTitle.slice(0, 200);
+    const lastSpace = truncated.lastIndexOf(' ');
+    cleanAdobeStockTitle = (lastSpace > 140 ? truncated.slice(0, lastSpace) : truncated).trim();
   }
 
   let cleanKeywords: string[] = [];

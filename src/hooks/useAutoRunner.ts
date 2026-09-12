@@ -114,7 +114,7 @@ export function useAutoRunner() {
       let promptCostUsd = ((inputTokens * PRICING_CONFIG.PROMPT_INPUT_PER_TOKEN_USD) + (outputTokens * PRICING_CONFIG.PROMPT_OUTPUT_PER_TOKEN_USD)).toFixed(6);
       let promptCostIdr = formatIdr(parseFloat(promptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
 
-      let adobeStockTitle = `${rawIdea.slice(0, 70)} 2D Vector Illustration Icon Isolated on White Background`;
+      let adobeStockTitle = `${rawIdea.trim()} 2D Vector Illustration Icon Isolated on White Background`;
       let keywords: string[] = [
         ...rawIdea.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
         'vector', 'illustration', 'icon', 'graphic', 'design', 'flat design',
