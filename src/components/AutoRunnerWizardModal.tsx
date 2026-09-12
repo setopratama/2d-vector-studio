@@ -48,6 +48,7 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
   const [rawIdea, setRawIdea] = useState('maskot rubah mekanik');
   const [selectedPreset, setSelectedPreset] = useState('flat-vector');
   const [isBlackAndWhite, setIsBlackAndWhite] = useState(false);
+  const [includeMetadata, setIncludeMetadata] = useState(false);
   const [targetQuantity, setTargetQuantity] = useState<number>(10);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -70,8 +71,9 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
 
   // Cost calculations for Step 2
   const userTok = estimateTextTokens(rawIdea);
-  const estPromptInputTok = (PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS + userTok) * targetQuantity;
-  const estPromptOutputTok = 65 * targetQuantity;
+  const baseSysTokens = includeMetadata ? PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS + 40 : PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS;
+  const estPromptInputTok = (baseSysTokens + userTok) * targetQuantity;
+  const estPromptOutputTok = (includeMetadata ? 200 : 60) * targetQuantity;
   const estPromptCostUsd = (
     estPromptInputTok * PRICING_CONFIG.PROMPT_INPUT_PER_TOKEN_USD +
     estPromptOutputTok * PRICING_CONFIG.PROMPT_OUTPUT_PER_TOKEN_USD
@@ -89,6 +91,7 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
       rawIdea,
       selectedPreset,
       isBlackAndWhite,
+      includeMetadata,
       targetQuantity,
       selectedEngine: 'gpt-image',
       onItemComplete: (item) => {
@@ -125,10 +128,10 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
           title: seoTitle,
           keywords: item.keywords || [],
           description: item.optimizedPrompt,
-          author: contributorProfile?.authorName || 'Vector Artist',
-          software: contributorProfile?.softwareName || 'Adobe Illustrator',
-          credit: contributorProfile?.credit,
-          source: contributorProfile?.source,
+          author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
+          software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
+          credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
+          source: contributorProfile?.includeSource ? (contributorProfile.source || undefined) : undefined,
         },
       };
     }).filter((d) => Boolean(d.url));
@@ -149,10 +152,10 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
       title: seoTitle,
       keywords: item.keywords || [],
       description: item.optimizedPrompt,
-      author: contributorProfile?.authorName || 'Vector Artist',
-      software: contributorProfile?.softwareName || 'Adobe Illustrator',
-      credit: contributorProfile?.credit,
-      source: contributorProfile?.source,
+      author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
+      software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
+      credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
+      source: contributorProfile?.includeSource ? (contributorProfile.source || undefined) : undefined,
     });
   };
 
@@ -348,6 +351,43 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
                   </div>
                   <p className={`text-[11px] ${isBlackAndWhite ? 'text-stone-300' : 'text-stone-500'}`}>
                     Tinta hitam pekat di atas putih murni tanpa bayangan abu-abu (paling mudah ditracing ke kurva SVG tunggal).
+                  </p>
+                </div>
+              </div>
+
+              {/* Checklist Pembuatan Metadata SEO (Default Non-Aktif) */}
+              <div
+                onClick={() => setIncludeMetadata(!includeMetadata)}
+                className={`border p-3.5 cursor-pointer transition-all select-none flex items-start gap-3 ${
+                  includeMetadata
+                    ? 'bg-amber-950/20 text-stone-900 border-amber-400'
+                    : 'bg-stone-50 text-stone-800 border-stone-300 hover:border-stone-500'
+                }`}
+              >
+                <div className="mt-0.5 shrink-0">
+                  {includeMetadata ? (
+                    <CheckSquare className="w-4 h-4 text-amber-800" />
+                  ) : (
+                    <Square className="w-4 h-4 text-stone-400" />
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider font-mono">
+                      Buat Sekaligus Metadata (Title & Keywords)
+                    </span>
+                    <span
+                      className={`text-[9px] font-mono uppercase px-1.5 py-0.2 font-bold ${
+                        includeMetadata ? 'bg-amber-200 text-amber-950 border border-amber-300' : 'bg-stone-200 text-stone-700'
+                      }`}
+                    >
+                      {includeMetadata ? 'Aktif (+SEO Tags)' : 'Non-Aktif (Hemat Token)'}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] ${includeMetadata ? 'text-amber-900' : 'text-stone-500'}`}>
+                    {includeMetadata
+                      ? 'Membuat Judul SEO Adobe Stock & 25–45 keywords tags microstock (~200 tokens output/item).'
+                      : 'Hanya membuat prompt visual 2D murni (~60 tokens output/item). Lebih cepat & hemat biaya kuota LLM.'}
                   </p>
                 </div>
               </div>

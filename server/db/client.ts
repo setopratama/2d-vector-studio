@@ -23,6 +23,8 @@ sqlite.exec(`
     batch_id TEXT,
     variation_index INTEGER DEFAULT 1,
     title TEXT NOT NULL,
+    adobe_stock_title TEXT,
+    keywords TEXT,
     raw_idea TEXT NOT NULL,
     optimized_prompt TEXT NOT NULL,
     negative_prompt TEXT,
@@ -61,6 +63,12 @@ sqlite.exec(`
 // Auto-migration helper: Add missing columns if database was created with an older schema
 try {
   const existingCols = (sqlite.pragma('table_info(prompts)') as Array<{ name: string }>).map((c) => c.name);
+  if (!existingCols.includes('adobe_stock_title')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN adobe_stock_title TEXT;');
+  }
+  if (!existingCols.includes('keywords')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN keywords TEXT;');
+  }
   if (!existingCols.includes('prompt_versions_data')) {
     sqlite.exec('ALTER TABLE prompts ADD COLUMN prompt_versions_data TEXT;');
   }

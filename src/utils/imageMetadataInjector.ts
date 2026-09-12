@@ -110,10 +110,10 @@ function createIptcDataset(recordNum: number, datasetNum: number, dataBytes: Uin
 }
 
 export function buildIptcIimBuffer(meta: ImageMetadata): Uint8Array {
-  const author = meta.author || 'Vector Artist';
-  const desc = meta.description || meta.title;
-  const credit = meta.credit || author;
-  const source = meta.source || 'Original Vector Artwork';
+  const author = meta.author?.trim() || '';
+  const desc = meta.description?.trim() || meta.title?.trim() || '';
+  const credit = meta.credit?.trim() || '';
+  const source = meta.source?.trim() || '';
 
   const datasets: Uint8Array[] = [
     // Record 1: Coded Character Set -> \x1b%G (UTF-8)
@@ -121,22 +121,30 @@ export function buildIptcIimBuffer(meta: ImageMetadata): Uint8Array {
 
     // Record 2: Object Name / Title (2:05)
     createIptcDataset(2, 0x05, encodeUtf8(meta.title.slice(0, 256))),
-
-    // Record 2: Caption / Abstract / Description (2:120)
-    createIptcDataset(2, 0x78, encodeUtf8(desc.slice(0, 2000))),
-
-    // Record 2: By-line / Author (2:80)
-    createIptcDataset(2, 0x50, encodeUtf8(author.slice(0, 128))),
-
-    // Record 2: Headline (2:105)
-    createIptcDataset(2, 0x69, encodeUtf8(meta.title.slice(0, 256))),
-
-    // Record 2: Credit (2:110)
-    createIptcDataset(2, 0x74, encodeUtf8(credit.slice(0, 128))),
-
-    // Record 2: Source (2:115)
-    createIptcDataset(2, 0x73, encodeUtf8(source.slice(0, 128))),
   ];
+
+  // Record 2: Caption / Abstract / Description (2:120)
+  if (desc) {
+    datasets.push(createIptcDataset(2, 0x78, encodeUtf8(desc.slice(0, 2000))));
+  }
+
+  // Record 2: By-line / Author (2:80) - Only if author provided
+  if (author) {
+    datasets.push(createIptcDataset(2, 0x50, encodeUtf8(author.slice(0, 128))));
+  }
+
+  // Record 2: Headline (2:105)
+  datasets.push(createIptcDataset(2, 0x69, encodeUtf8(meta.title.slice(0, 256))));
+
+  // Record 2: Credit (2:110) - Only if credit provided
+  if (credit) {
+    datasets.push(createIptcDataset(2, 0x74, encodeUtf8(credit.slice(0, 128))));
+  }
+
+  // Record 2: Source (2:115) - Only if source provided
+  if (source) {
+    datasets.push(createIptcDataset(2, 0x73, encodeUtf8(source.slice(0, 128))));
+  }
 
   // Record 2: Keywords (2:25) - Repeated tag for each keyword
   for (const kw of meta.keywords) {
@@ -191,34 +199,48 @@ export function buildPhotoshop8bimBlock(iptcBytes: Uint8Array): Uint8Array {
 // LAYER 2: EXIF IFD0 SERIALIZER WITH WINDOWS XP TAGS (UCS-2 / UTF-16LE)
 // ============================================================================
 export function buildExifTiffBuffer(meta: ImageMetadata): Uint8Array {
-  const author = meta.author || 'Vector Artist';
-  const software = meta.software || 'Adobe Illustrator';
-  const desc = meta.description || meta.title;
+  const author = meta.author?.trim() || '';
+  const software = meta.software?.trim() || '';
+  const desc = meta.description?.trim() || meta.title?.trim() || '';
   const keywordsSemicolon = meta.keywords.join(';');
 
   // Prepare string payloads
-  const asciiDesc = encodeUtf8(desc + '\0');
-  const asciiAuthor = encodeUtf8(author + '\0');
-  const asciiSoftware = encodeUtf8(software + '\0');
+  const asciiDesc = desc ? encodeUtf8(desc + '\0') : null;
+  const asciiAuthor = author ? encodeUtf8(author + '\0') : null;
+  const asciiSoftware = software ? encodeUtf8(software + '\0') : null;
 
   const xpTitle = encodeUtf16LE(meta.title, true);
-  const xpKeywords = encodeUtf16LE(keywordsSemicolon, true);
-  const xpComment = encodeUtf16LE(desc, true);
-  const xpAuthor = encodeUtf16LE(author, true);
+  const xpKeywords = keywordsSemicolon ? encodeUtf16LE(keywordsSemicolon, true) : null;
+  const xpComment = desc ? encodeUtf16LE(desc, true) : null;
+  const xpAuthor = author ? encodeUtf16LE(author, true) : null;
   const xpSubject = encodeUtf16LE(meta.title, true);
 
-  // IFD Entries definition:
-  // Tag ID, Type (1=BYTE, 2=ASCII, 3=SHORT, 4=LONG), Count, Raw Data bytes
-  const entries: Array<{ tag: number; type: number; count: number; data: Uint8Array }> = [
-    { tag: 0x010e, type: 2, count: asciiDesc.length, data: asciiDesc },         // ImageDescription (ASCII)
-    { tag: 0x0131, type: 2, count: asciiSoftware.length, data: asciiSoftware }, // Software (ASCII)
-    { tag: 0x013b, type: 2, count: asciiAuthor.length, data: asciiAuthor },     // Artist / Author (ASCII)
-    { tag: 0x9c9b, type: 1, count: xpTitle.length, data: xpTitle },             // XPTitle (BYTE / UTF-16LE)
-    { tag: 0x9c9c, type: 1, count: xpComment.length, data: xpComment },         // XPComment (BYTE / UTF-16LE)
-    { tag: 0x9c9d, type: 1, count: xpAuthor.length, data: xpAuthor },           // XPAuthor (BYTE / UTF-16LE)
-    { tag: 0x9c9e, type: 1, count: xpKeywords.length, data: xpKeywords },       // XPKeywords (BYTE / UTF-16LE)
-    { tag: 0x9c9f, type: 1, count: xpSubject.length, data: xpSubject },         // XPSubject (BYTE / UTF-16LE)
-  ];
+  // IFD Entries definition (Dynamic based on present fields)
+  const entries: Array<{ tag: number; type: number; count: number; data: Uint8Array }> = [];
+
+  if (asciiDesc) {
+    entries.push({ tag: 0x010e, type: 2, count: asciiDesc.length, data: asciiDesc }); // ImageDescription
+  }
+  if (asciiSoftware) {
+    entries.push({ tag: 0x0131, type: 2, count: asciiSoftware.length, data: asciiSoftware }); // Software
+  }
+  if (asciiAuthor) {
+    entries.push({ tag: 0x013b, type: 2, count: asciiAuthor.length, data: asciiAuthor }); // Artist / Author
+  }
+
+  entries.push({ tag: 0x9c9b, type: 1, count: xpTitle.length, data: xpTitle }); // XPTitle
+
+  if (xpComment) {
+    entries.push({ tag: 0x9c9c, type: 1, count: xpComment.length, data: xpComment }); // XPComment
+  }
+  if (xpAuthor) {
+    entries.push({ tag: 0x9c9d, type: 1, count: xpAuthor.length, data: xpAuthor }); // XPAuthor
+  }
+  if (xpKeywords) {
+    entries.push({ tag: 0x9c9e, type: 1, count: xpKeywords.length, data: xpKeywords }); // XPKeywords
+  }
+
+  entries.push({ tag: 0x9c9f, type: 1, count: xpSubject.length, data: xpSubject }); // XPSubject
 
   // Sort entries ascending by Tag ID (Required by TIFF specification)
   entries.sort((a, b) => a.tag - b.tag);
@@ -288,17 +310,39 @@ export function buildExifTiffBuffer(meta: ImageMetadata): Uint8Array {
 // LAYER 3: ADOBE XMP PACKET SERIALIZER (RDF XML DUBLIN CORE)
 // ============================================================================
 export function buildAdobeXmpPacket(meta: ImageMetadata): string {
-  const author = escapeXml(meta.author || 'Vector Artist');
-  const software = escapeXml(meta.software || 'Adobe Illustrator');
-  const credit = escapeXml(meta.credit || author);
-  const source = escapeXml(meta.source || 'Original Vector Artwork');
-  const desc = escapeXml(meta.description || meta.title);
-  const title = escapeXml(meta.title);
+  const author = meta.author?.trim() ? escapeXml(meta.author.trim()) : '';
+  const software = meta.software?.trim() ? escapeXml(meta.software.trim()) : '';
+  const credit = meta.credit?.trim() ? escapeXml(meta.credit.trim()) : '';
+  const source = meta.source?.trim() ? escapeXml(meta.source.trim()) : '';
+  const desc = escapeXml(meta.description?.trim() || meta.title?.trim() || '');
+  const title = escapeXml(meta.title?.trim() || '');
 
   const keywordsXml = meta.keywords
     .filter((k) => k.trim())
     .map((k) => `            <rdf:li>${escapeXml(k.trim())}</rdf:li>`)
     .join('\n');
+
+  const creatorNode = author
+    ? `      <dc:creator>
+        <rdf:Seq>
+          <rdf:li>${author}</rdf:li>
+        </rdf:Seq>
+      </dc:creator>`
+    : '';
+
+  const rightsNode = author
+    ? `      <dc:rights>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">Copyright © ${new Date().getFullYear()} ${author}. All rights reserved.</rdf:li>
+        </rdf:Alt>
+      </dc:rights>`
+    : '';
+
+  const creditNode = credit ? `      <photoshop:Credit>${credit}</photoshop:Credit>` : '';
+  const sourceNode = source ? `      <photoshop:Source>${source}</photoshop:Source>` : '';
+  const authorPosNode = author ? `      <photoshop:AuthorsPosition>Artist / Creator</photoshop:AuthorsPosition>` : '';
+  const captionWriterNode = author ? `      <photoshop:CaptionWriter>${author}</photoshop:CaptionWriter>` : '';
+  const creatorToolNode = software ? `      <xmp:CreatorTool>${software}</xmp:CreatorTool>` : '';
 
   return `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000">
@@ -319,27 +363,19 @@ export function buildAdobeXmpPacket(meta: ImageMetadata): string {
           <rdf:li xml:lang="x-default">${desc}</rdf:li>
         </rdf:Alt>
       </dc:description>
-      <dc:creator>
-        <rdf:Seq>
-          <rdf:li>${author}</rdf:li>
-        </rdf:Seq>
-      </dc:creator>
-      <dc:rights>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">Copyright © ${new Date().getFullYear()} ${author}. All rights reserved.</rdf:li>
-        </rdf:Alt>
-      </dc:rights>
+${creatorNode}
+${rightsNode}
       <dc:subject>
         <rdf:Bag>
 ${keywordsXml}
         </rdf:Bag>
       </dc:subject>
       <photoshop:Headline>${title}</photoshop:Headline>
-      <photoshop:Credit>${credit}</photoshop:Credit>
-      <photoshop:Source>${source}</photoshop:Source>
-      <photoshop:AuthorsPosition>Artist / Creator</photoshop:AuthorsPosition>
-      <photoshop:CaptionWriter>${author}</photoshop:CaptionWriter>
-      <xmp:CreatorTool>${software}</xmp:CreatorTool>
+${creditNode}
+${sourceNode}
+${authorPosNode}
+${captionWriterNode}
+${creatorToolNode}
       <xmpRights:Marked>True</xmpRights:Marked>
     </rdf:Description>
   </rdf:RDF>
@@ -568,23 +604,21 @@ export function injectImageMetadata(imageBytes: Uint8Array, meta: ImageMetadata)
 }
 
 /**
- * Sanitizes a title into a clean, SEO-friendly file name for microstock portals (without 1x1).
+ * Sanitizes a title into a clean, SEO-friendly file name for microstock portals (without 1x1 and without underscores).
  */
 export function sanitizeSeoFileName(title: string, suffix: string = '.png'): string {
-  if (!title) return `vector_asset_${Date.now()}${suffix}`;
+  if (!title) return `vector-asset-${Date.now()}${suffix}`;
 
   const clean = title
     .toLowerCase()
-    .replace(/\b1\s*[:xX\-]\s*1\b/gi, '') // remove 1:1, 1x1, 1-1
-    .replace(/_1x1(?=_|$)/gi, '')
-    .replace(/_1_1(?=_|$)/gi, '')
-    .replace(/1x1/gi, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/_1x1_/gi, '_')
-    .replace(/_1x1$/gi, '')
-    .replace(/^_+|_+$/g, '')
+    .replace(/1\s*[:xX\-_]\s*1/gi, ' ') // remove all variations of 1x1, 1:1, 1-1, 1_1
+    .replace(/[^a-z0-9]+/g, '-') // convert all underscores, spaces, punctuation to hyphens
+    .replace(/(^|-)1-1(-|$)/g, '$1$2') // cleanup any leftover 1-1
+    .replace(/(^|-)1x1(-|$)/g, '$1$2') // cleanup any leftover 1x1
+    .replace(/-+/g, '-') // collapse multiple hyphens into single hyphen
+    .replace(/^-+|-+$/g, '') // trim leading/trailing hyphens
     .slice(0, 80);
 
-  const finalBase = clean || 'vector_graphic';
+  const finalBase = clean || 'vector-graphic';
   return finalBase.endsWith(suffix) ? finalBase : `${finalBase}${suffix}`;
 }

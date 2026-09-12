@@ -94,7 +94,7 @@ export async function saveGeneratedImagesByDate(
     const item = images[i];
     if (!item.b64_json && !item.url) continue;
 
-    const fileName = `img_${timestamp}_${i}.png`;
+    const fileName = `img-${timestamp}-${i}.png`;
     const absolutePath = path.join(dateDir, fileName);
     const relativePath = path.posix.join('outputs', today, fileName);
 

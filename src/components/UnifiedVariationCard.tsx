@@ -161,10 +161,10 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
         title: activeStockTitle,
         keywords: activeKeywords,
         description: activePromptVersion.optimizedPrompt,
-        author: contributorProfile?.authorName || 'Vector Artist',
-        software: contributorProfile?.softwareName || 'Adobe Illustrator',
-        credit: contributorProfile?.credit,
-        source: contributorProfile?.source,
+        author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
+        software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
+        credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
+        source: contributorProfile?.includeSource ? (contributorProfile.source || undefined) : undefined,
       });
     } finally {
       setTimeout(() => setIsDownloadingWithMeta(false), 800);
@@ -180,8 +180,10 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     await downloadSingleImage(downloadUrl, fileName, {
       title: activeStockTitle,
       keywords: activeKeywords,
-      author: contributorProfile?.authorName || 'Vector Artist',
-      software: contributorProfile?.softwareName || 'Adobe Illustrator',
+      author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
+      software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
+      credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
+      source: contributorProfile?.includeSource ? (contributorProfile.source || undefined) : undefined,
     });
   };
 
@@ -339,14 +341,14 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
             <div className="p-3.5 bg-amber-50/50 border-2 border-amber-300/80 space-y-3 shadow-2xs">
               {/* Author Info Bar */}
               <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] font-mono text-amber-950 flex-wrap">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold uppercase">Author:</span>
                   <span className="bg-white px-2 py-0.5 border border-amber-300 font-bold text-stone-900">
-                    {contributorProfile?.authorName || 'Vector Artist'}
+                    {contributorProfile?.includeAuthor ? (contributorProfile.authorName || 'Vector Artist') : '(Dikosongkan)'}
                   </span>
                   <span className="text-stone-400">•</span>
-                  <span className="text-stone-600 hidden sm:inline">
-                    Tool: <strong>{contributorProfile?.softwareName || 'Adobe Illustrator'}</strong>
+                  <span className="text-stone-600">
+                    Tool: <strong>{contributorProfile?.includeSoftware ? (contributorProfile.softwareName || 'Adobe Illustrator') : '(Dikosongkan)'}</strong>
                   </span>
                 </div>
 

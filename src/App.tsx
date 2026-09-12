@@ -55,6 +55,7 @@ export function App() {
   const [selectedEngine, setSelectedEngine] = useState<TargetEngine>('gpt-image');
   const [selectedPreset, setSelectedPreset] = useState('flat-vector');
   const [isBlackAndWhite, setIsBlackAndWhite] = useState(false);
+  const [includeMetadata, setIncludeMetadata] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
@@ -70,7 +71,8 @@ export function App() {
     rawIdea,
     effectiveBatchCount,
     1,
-    inputMode === 'multi-keyword'
+    inputMode === 'multi-keyword',
+    includeMetadata
   );
 
   // Workflow Generator Hook (Connected to SQLite DB & FIFO Queue Worker)
@@ -112,6 +114,7 @@ export function App() {
       selectedEngine,
       selectedPreset,
       isBlackAndWhite,
+      includeMetadata,
     });
   };
 
@@ -203,6 +206,8 @@ export function App() {
             isLoading={isGeneratingPrompt}
             onGeneratePrompts={onTriggerPromptGeneration}
             isBlackAndWhite={isBlackAndWhite}
+            includeMetadata={includeMetadata}
+            onToggleIncludeMetadata={setIncludeMetadata}
           />
         </div>
 

@@ -50,6 +50,7 @@ export interface PromptExpansionParams {
   variationStyle?: string;
   variationIndex?: number;
   isBlackAndWhite?: boolean;
+  includeMetadata?: boolean;
 }
 
 export interface PromptExpansionResult {
@@ -91,9 +92,37 @@ export async function generateOptimizedPrompt(
 
   const variationAngle = params.variationStyle || 'Dynamic Angle';
   const variationIndexStr = params.variationIndex ? ` (Variation #${params.variationIndex})` : '';
+  const includeMeta = Boolean(params.includeMetadata);
 
-  const systemPrompt = `You are an expert prompt engineer and Adobe Stock metadata specialist specializing in 2D vector graphic assets, icons, and sticker art optimized for SVG autotracing, microstock SEO ranking, and image generation.
-Convert the user's raw idea into a concise 2D visual prompt (strictly 30-50 words) along with high-ranking Adobe Stock SEO metadata.
+  const metadataSystemInstruction = includeMeta
+    ? `5. Adobe Stock Title Requirement:
+   - "adobeStockTitle": A commercial, SEO-optimized title in English describing the vector asset.
+   - Character count MUST be between 70 to 120 characters (STRICT MAXIMUM 120 characters).
+   - Must include the main subject, 2D vector style, and "isolated on white background".
+6. Adobe Stock Keywords Requirement:
+   - "keywords": An array of 25 to 45 high-relevance microstock search tags in English.
+   - Each keyword must be MAXIMUM 2 words (e.g. "vector art", "fox mascot", "flat design", "emblem", "isolated", "white background", "logo icon").
+   - No punctuation, no duplicate tags.`
+    : ``;
+
+  const jsonKeysInstruction = includeMeta
+    ? `Respond strictly in JSON format with keys:
+- title: (short 3-5 word summary)
+- adobeStockTitle: (commercial English SEO title, 70-120 characters max)
+- keywords: (array of 25-45 stock keywords in English, max 2 words per tag)
+- optimizedPrompt: (concise 30-50 words vector prompt in English)
+- negativePrompt: (concise negative keywords)
+- vectorStyle: (must be "${presetInfo.name} - ${variationAngle}")
+- colorPalette: (e.g., "Pure Black & White Ink" or "Flat Solid Colors")`
+    : `Respond strictly in JSON format with keys:
+- title: (short 3-5 word summary)
+- optimizedPrompt: (concise 30-50 words vector prompt in English)
+- negativePrompt: (concise negative keywords)
+- vectorStyle: (must be "${presetInfo.name} - ${variationAngle}")
+- colorPalette: (e.g., "Pure Black & White Ink" or "Flat Solid Colors")`;
+
+  const systemPrompt = `You are an expert prompt engineer specializing in 2D vector graphic assets, icons, and sticker art optimized for SVG autotracing and image generation.
+Convert the user's raw idea into a concise 2D visual prompt (strictly 30-50 words).
 
 CRITICAL STRICT RULES:
 1. STRICT STYLE CONSISTENCY: The user has selected the style preset: "${presetInfo.name}".
@@ -103,23 +132,9 @@ CRITICAL STRICT RULES:
 2. Token Efficiency: Zero filler words (no "masterpiece", "trending", "ultra high quality"). Direct, high-density visual descriptors only.
 3. 2D Vector Look: Sharp vector contours, bold solid lines, clean solid color fills, isolated on pure white background.
 4. Black & White Mode: If ENABLED, enforce pure black ink line art/silhouette on solid white background with zero grays, zero shadows, zero gradients, and zero colors.
-5. Adobe Stock Title Requirement:
-   - "adobeStockTitle": A commercial, SEO-optimized title in English describing the vector asset.
-   - Character count MUST be between 70 to 120 characters (STRICT MAXIMUM 120 characters).
-   - Must include the main subject, 2D vector style, and "isolated on white background".
-6. Adobe Stock Keywords Requirement:
-   - "keywords": An array of 25 to 45 high-relevance microstock search tags in English.
-   - Each keyword must be MAXIMUM 2 words (e.g. "vector art", "fox mascot", "flat design", "emblem", "isolated", "white background", "logo icon").
-   - No punctuation, no duplicate tags.
+${metadataSystemInstruction}
 
-Respond strictly in JSON format with keys:
-- title: (short 3-5 word summary)
-- adobeStockTitle: (commercial English SEO title, 70-120 characters max)
-- keywords: (array of 25-45 stock keywords in English, max 2 words per tag)
-- optimizedPrompt: (concise 30-50 words vector prompt in English)
-- negativePrompt: (concise negative keywords)
-- vectorStyle: (must be "${presetInfo.name} - ${variationAngle}")
-- colorPalette: (e.g., "Pure Black & White Ink" or "Flat Solid Colors")`;
+${jsonKeysInstruction}`;
 
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,
@@ -138,7 +153,7 @@ Selected Style Preset: "${presetInfo.name}" (Style guideline: ${presetInfo.promp
 Variation Angle: "${variationAngle}"${variationIndexStr}.
 Target Engine: ${params.targetEngine || 'gpt-image'}. Aspect Ratio: ${params.aspectRatio || '1:1'}.
 Black & White Mode: ${params.isBlackAndWhite ? 'ENABLED (Pure Black Ink Art on solid white, zero color, zero grayscale)' : 'DISABLED (Vibrant Flat Solid Colors)'}.
-Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo.name}" with the "${variationAngle}" angle, isolated on pure white background, plus Adobe Stock SEO Title (70-120 chars) and 25-45 stock keywords (max 2 words per tag).`;
+Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo.name}" with the "${variationAngle}" angle, isolated on pure white background${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars) and 25-45 stock keywords' : ''}.`;
 
   const response = await fetch(promptEndpoint, {
     method: 'POST',
@@ -181,13 +196,13 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
     };
   }
 
-  // Ensure Adobe Stock Title is max 120 characters
+  // Ensure Adobe Stock Title if metadata requested
   let cleanAdobeStockTitle = parsed.adobeStockTitle || `${params.rawIdea} vector graphic asset, isolated on pure white background`;
   if (cleanAdobeStockTitle.length > 120) {
     cleanAdobeStockTitle = cleanAdobeStockTitle.slice(0, 117) + '...';
   }
 
-  // Ensure Keywords are clean string array with max 2 words per item
+  // Ensure Keywords
   let cleanKeywords: string[] = [];
   if (Array.isArray(parsed.keywords)) {
     cleanKeywords = parsed.keywords
@@ -212,8 +227,8 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
 
   return {
     ...parsed,
-    adobeStockTitle: cleanAdobeStockTitle,
-    keywords: cleanKeywords,
+    adobeStockTitle: includeMeta ? cleanAdobeStockTitle : (parsed.adobeStockTitle || cleanAdobeStockTitle),
+    keywords: includeMeta ? cleanKeywords : (parsed.keywords?.length ? cleanKeywords : ['vector', 'illustration', 'isolated', 'white background']),
     vectorStyle: parsed.vectorStyle || `${presetInfo.name} - ${variationAngle}`,
     usage: {
       promptTokens,

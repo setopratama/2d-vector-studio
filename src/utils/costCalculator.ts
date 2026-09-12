@@ -28,7 +28,8 @@ export function estimateTextTokens(text: string): number {
 export function estimatePromptCost(
   rawIdea: string,
   batchCount: number = 1,
-  isMultiLineMode: boolean = false
+  isMultiLineMode: boolean = false,
+  includeMetadata: boolean = false
 ): PrePromptEstimate {
   const safeBatch = Math.max(1, batchCount);
   const userTokens = estimateTextTokens(rawIdea);
@@ -38,9 +39,13 @@ export function estimatePromptCost(
     ? PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS + (safeBatch * 15)
     : PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS;
 
-  const estimatedInputTokens = userTokens === 0 ? 0 : baseTokens + userTokens;
-  // Dense 2D vector prompt target: ~65 output tokens per variation
-  const estimatedOutputTokens = userTokens === 0 ? 0 : safeBatch * 65;
+  // If includeMetadata is enabled, system prompt includes extra metadata guidelines (~40 tokens)
+  const effectiveBaseTokens = includeMetadata ? baseTokens + 40 : baseTokens;
+  const estimatedInputTokens = userTokens === 0 ? 0 : effectiveBaseTokens + userTokens;
+  
+  // Output tokens: ~60 tokens for pure visual prompt, ~200 tokens if Adobe Stock SEO title & 25-45 keywords are included
+  const tokensPerVariation = includeMetadata ? 200 : 60;
+  const estimatedOutputTokens = userTokens === 0 ? 0 : safeBatch * tokensPerVariation;
 
   const costUsd =
     estimatedInputTokens * PRICING_CONFIG.PROMPT_INPUT_PER_TOKEN_USD +
@@ -52,7 +57,7 @@ export function estimatePromptCost(
     estimatedOutputTokens,
     estimatedPromptCostUsd: Number(costUsd.toFixed(6)),
     estimatedPromptCostIdr: Math.round(costUsd * PRICING_CONFIG.USD_TO_IDR_RATE * 100) / 100,
-    formula: `(${estimatedInputTokens} in × $0.00000014) + (${estimatedOutputTokens} out [${safeBatch}x] × $0.00000056)`,
+    formula: `(${estimatedInputTokens} in × $0.00000014) + (${estimatedOutputTokens} out [${safeBatch}x @~${tokensPerVariation}tok] × $0.00000056)`,
   };
 }
 
@@ -77,9 +82,10 @@ export function calculateFullPipelineCost(
   rawIdea: string,
   batchCount: number = 1,
   imagesPerPrompt: number = 1,
-  isMultiLineMode: boolean = false
+  isMultiLineMode: boolean = false,
+  includeMetadata: boolean = false
 ): TotalCostEstimate {
-  const promptEst = estimatePromptCost(rawIdea, batchCount, isMultiLineMode);
+  const promptEst = estimatePromptCost(rawIdea, batchCount, isMultiLineMode, includeMetadata);
   const totalImages = promptEst.batchCount * imagesPerPrompt;
   const imageEst = estimateImageCost(totalImages);
 

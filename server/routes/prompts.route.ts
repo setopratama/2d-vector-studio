@@ -16,19 +16,28 @@ function sanitizeImagesForSqlite(images: any[] | undefined): string | null {
   return JSON.stringify(stripped);
 }
 
+function safeJsonParse<T>(val: string | null | undefined, fallback: T): T {
+  if (!val) return fallback;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return fallback;
+  }
+}
+
 export async function promptsRoutes(fastify: FastifyInstance) {
   // GET /api/prompts - Fetch history
   fastify.get('/api/prompts', async (request, reply) => {
     try {
       const rows = db.select().from(prompts).orderBy(desc(prompts.createdAt)).all();
-      // Parse JSON fields
+      // Parse JSON fields safely
       const formatted = rows.map((r) => ({
         id: r.id,
         batchId: r.batchId,
         variationIndex: r.variationIndex,
         title: r.title,
         adobeStockTitle: r.adobeStockTitle || undefined,
-        keywords: r.keywords ? JSON.parse(r.keywords) : undefined,
+        keywords: safeJsonParse<string[] | undefined>(r.keywords, undefined),
         rawIdea: r.rawIdea,
         optimizedPrompt: r.optimizedPrompt,
         negativePrompt: r.negativePrompt,
@@ -38,10 +47,10 @@ export async function promptsRoutes(fastify: FastifyInstance) {
         vectorStyle: r.vectorStyle,
         isBlackAndWhite: Boolean(r.isBlackAndWhite),
         activePromptVersionIndex: r.activePromptVersionIndex || 0,
-        promptVersions: r.promptVersionsData ? JSON.parse(r.promptVersionsData) : undefined,
+        promptVersions: safeJsonParse<any[] | undefined>(r.promptVersionsData, undefined),
         imagePath: r.imagePath,
-        allImagePaths: r.allImagePaths ? JSON.parse(r.allImagePaths) : [],
-        images: r.imagesData ? JSON.parse(r.imagesData) : [],
+        allImagePaths: safeJsonParse<string[]>(r.allImagePaths, []),
+        images: safeJsonParse<any[]>(r.imagesData, []),
         generationCount: r.generationCount,
         inputTokens: r.inputTokens,
         outputTokens: r.outputTokens,

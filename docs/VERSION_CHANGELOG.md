@@ -17,13 +17,22 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 ## 🚀 Rincian Catatan Rilis per Versi
 
-### Versi 1.3.0 — *Smart Concept Expander & Clean Naming* (Versi Aktif)
+### Versi 1.3.0 — *Smart Concept Expander, Clean Naming & Granular Metadata Controls* (Versi Aktif)
+- **🔲 Opsi Checklist Pengosongan/Pengabaian Metadata Gambar (Author, Software, Credit, Source)**:
+  - Menyediakan saklar checklist mandiri pada Modal Pengaturan Profil Kontributor untuk 4 field: *Nama Author/Artist*, *Tag Software*, *Credit/Copyright*, dan *Source/Asal Karya*.
+  - Jika checklist dinonaktifkan / dikosongkan, tag-tag tersebut **tidak akan disuntikkan sama sekali ke dalam metadata biner file gambar (IPTC, EXIF, XMP)** tanpa memaksa nilai default (*zero fallback injection*).
+  - Dilengkapi tombol cepat: *"Centang Semua"* dan *"Kosongkan Semua"*.
+- **📋 Saklar / Checklist Metadata SEO Opsional (Default Non-Aktif)**:
+  - Menyediakan opsi checklist interaktif pada *Card Kalkulasi & Pra-Estimasi Biaya Batch*: *"Buat Sekaligus Metadata (Title, Deskripsi/Stock Title & Keywords)"*.
+  - **Status Default: Non-Aktif** untuk menghemat token output LLM (~60 tokens output/variasi vs ~200 tokens) dan mempercepat eksekusi prompt visual 2D murni.
+  - Perhitungan live estimasi token & biaya langsung menyesuaikan secara reaktif saat checklist diaktifkan/dinonaktifkan.
 - **🧠 Fitur AI Concept Expander**:
   - Menyediakan kotak input khusus 1–2 kata dasar (misal: *"kopi susu"*, *"rubah mekanik"*, *"mobil"*) yang otomatis dikembangkan AI menjadi **4 ide subjek/karakter imajinatif netral** (masing-masing tepat 3–4 kata).
   - Ide subjek dibuat netral dan bebas label gaya teknis (*flat, stencil, badge*) agar tidak bertabrakan saat dipadukan dengan gaya grafis 2D apa pun.
   - Perhitungan token & biaya transparan (~$0.000030 / Rp 0,48 - Rp 0,55 per run).
-- **🏷️ Pembersihan Nama File**:
-  - Menghapus akhiran dan pola `1x1` / `1:1` dari seluruh file unduhan dan simpanan gambar menjadi murni judul SEO Adobe Stock yang rapi.
+- **🏷️ Pembersihan Nama File (Hapus Karakter Underscore `_` & Label Rasio `1x1`/`1:1`)**:
+  - Menghapus seluruh karakter underscore `_` dari nama file gambar yang di-generate maupun diunduh (termasuk storage server disk `img-timestamp-index.png` dan download SEO).
+  - Mengubah penamaan file menjadi format **kebab-case murni dengan tanda hubung (`-`)** yang bersih, rapi, dan ramah SEO tanpa double hyphen, tanpa trailing/leading hyphen, serta tanpa sisa teks `1:1` atau `1x1`.
 - **⚙️ Modal Versi & Saklar Mode UI (*Feature Switcher*)**:
   - Menambahkan tombol badge versi `v1.3.0` di Navbar dan Footer.
   - Pengguna dapat beralih antara **Mode Lengkap (v1.3.0)** dan **Mode Klasik Bersih (v1.0.0)** sesuai selera.

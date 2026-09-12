@@ -14,6 +14,7 @@ export interface AutoRunnerConfig {
   isBlackAndWhite: boolean;
   targetQuantity: number;
   selectedEngine?: TargetEngine;
+  includeMetadata?: boolean;
   onItemComplete?: (item: PromptItem) => void;
 }
 
@@ -131,6 +132,7 @@ export function useAutoRunner() {
             variationStyle: angle.style,
             variationIndex: i + 1,
             isBlackAndWhite,
+            includeMetadata: activeConfigRef.current?.includeMetadata ?? false,
           }),
         });
 
@@ -169,7 +171,7 @@ export function useAutoRunner() {
 
       const dateDir = new Date().toISOString().split('T')[0];
       const versionNum = 1;
-      const fileName = `img_wiz_${now}_${i}_v${versionNum}.png`;
+      const fileName = `img-wiz-${now}-${i}-v${versionNum}.png`;
       let relativePath = `outputs/${dateDir}/${fileName}`;
       let pngDataUrl = '';
 

@@ -234,7 +234,7 @@ export const ImageResultCard: React.FC<ImageResultCardProps> = ({
                 {/* File Path Indicator */}
                 <div className="bg-stone-50 border border-stone-200 p-2 font-mono text-[9px] text-stone-600 truncate select-all">
                   <span className="font-bold text-stone-800">File: </span>
-                  data/{activeImg?.imagePath || `outputs/${dateStr}/img_${item.id}_v${activeImg?.version || 1}.png`}
+                  data/{activeImg?.imagePath || `outputs/${dateStr}/img-${item.id}-v${activeImg?.version || 1}.png`}
                 </div>
 
                 {/* Prompt Used */}

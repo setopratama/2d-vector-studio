@@ -14,7 +14,7 @@ export interface StylePreset {
 
 export interface GeneratedImageVersion {
   version: number;
-  imagePath: string; // e.g. "outputs/2026-09-10/img_1725940000000_0.png"
+  imagePath: string; // e.g. "outputs/2026-09-10/img-1725940000000-0.png"
   dataUrl?: string;  // Data URL (SVG/PNG) for immediate browser rendering & downloading
   timestamp: number;
   costUsd: number;   // e.g. 0.02

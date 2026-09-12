@@ -278,7 +278,7 @@ export function usePromptGenerator() {
     const now = Date.now();
     const dateDir = new Date().toISOString().split('T')[0];
     const versionNum = target.images.length > 0 ? target.images.length + 1 : 1;
-    const fileName = `img_${now}_v${versionNum}.png`;
+    const fileName = `img-${now}-v${versionNum}.png`;
     let relativePath = `outputs/${dateDir}/${fileName}`;
     let pngDataUrl = '';
 
@@ -400,6 +400,7 @@ export function usePromptGenerator() {
           variationStyle: angle.style,
           variationIndex: target.variationIndex || 1,
           isBlackAndWhite: target.isBlackAndWhite,
+          includeMetadata: Boolean(target.keywords && target.keywords.length > 5),
         }),
       });
 
@@ -609,6 +610,7 @@ export function usePromptGenerator() {
     selectedEngine,
     selectedPreset,
     isBlackAndWhite,
+    includeMetadata = false,
   }: {
     rawIdea: string;
     inputMode: InputMode;
@@ -616,6 +618,7 @@ export function usePromptGenerator() {
     selectedEngine: TargetEngine;
     selectedPreset: string;
     isBlackAndWhite: boolean;
+    includeMetadata?: boolean;
   }) => {
     if (!rawIdea.trim() || isGeneratingPrompt) return;
 
@@ -688,6 +691,7 @@ export function usePromptGenerator() {
               variationStyle: angle.style,
               variationIndex: idx + 1,
               isBlackAndWhite,
+              includeMetadata,
             }),
           });
 
@@ -798,7 +802,16 @@ export function usePromptGenerator() {
   /**
    * Action: Batch Download all generated PNGs with metadata injection
    */
-  const handleDownloadAllImages = async (profile?: { authorName?: string; softwareName?: string; credit?: string; source?: string }) => {
+  const handleDownloadAllImages = async (profile?: {
+    includeAuthor?: boolean;
+    authorName?: string;
+    includeSoftware?: boolean;
+    softwareName?: string;
+    includeCredit?: boolean;
+    credit?: string;
+    includeSource?: boolean;
+    source?: string;
+  }) => {
     const itemsWithImages = activePrompts.filter((p) => p.images.length > 0);
     if (itemsWithImages.length === 0) return;
 
@@ -815,10 +828,10 @@ export function usePromptGenerator() {
           title: seoTitle,
           keywords: item.keywords || [],
           description: item.optimizedPrompt,
-          author: profile?.authorName || 'Vector Artist',
-          software: profile?.softwareName || 'Adobe Illustrator',
-          credit: profile?.credit,
-          source: profile?.source,
+          author: profile?.includeAuthor ? (profile.authorName || undefined) : undefined,
+          software: profile?.includeSoftware ? (profile.softwareName || undefined) : undefined,
+          credit: profile?.includeCredit ? (profile.credit || undefined) : undefined,
+          source: profile?.includeSource ? (profile.source || undefined) : undefined,
         },
       };
     }).filter((d) => Boolean(d.url));
