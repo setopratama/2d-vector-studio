@@ -604,21 +604,22 @@ export function injectImageMetadata(imageBytes: Uint8Array, meta: ImageMetadata)
 }
 
 /**
- * Sanitizes a title into a clean, SEO-friendly file name for microstock portals (without 1x1 and without underscores).
+ * Sanitizes a title into a clean, SEO-friendly file name for microstock portals (using spaces, without 1x1, without underscores, and without illegal filename characters).
  */
 export function sanitizeSeoFileName(title: string, suffix: string = '.png'): string {
-  if (!title) return `vector-asset-${Date.now()}${suffix}`;
+  if (!title) return `vector asset ${Date.now()}${suffix}`;
 
   const clean = title
     .toLowerCase()
     .replace(/1\s*[:xX\-_]\s*1/gi, ' ') // remove all variations of 1x1, 1:1, 1-1, 1_1
-    .replace(/[^a-z0-9]+/g, '-') // convert all underscores, spaces, punctuation to hyphens
-    .replace(/(^|-)1-1(-|$)/g, '$1$2') // cleanup any leftover 1-1
-    .replace(/(^|-)1x1(-|$)/g, '$1$2') // cleanup any leftover 1x1
-    .replace(/-+/g, '-') // collapse multiple hyphens into single hyphen
-    .replace(/^-+|-+$/g, '') // trim leading/trailing hyphens
-    .slice(0, 80);
+    .replace(/[_\\/:*?"<>|]+/g, ' ') // convert underscores and illegal filename chars to spaces
+    .replace(/[^a-z0-9\s-]+/gi, ' ') // convert punctuation/symbols to spaces
+    .replace(/\b1-1\b|\b1x1\b/gi, ' ') // cleanup standalone 1-1 or 1x1
+    .replace(/\s+/g, ' ') // collapse multiple spaces into single space
+    .replace(/^[\s-]+|[\s-]+$/g, '') // trim leading/trailing spaces and hyphens
+    .slice(0, 80)
+    .trim();
 
-  const finalBase = clean || 'vector-graphic';
+  const finalBase = clean || 'vector graphic';
   return finalBase.endsWith(suffix) ? finalBase : `${finalBase}${suffix}`;
 }

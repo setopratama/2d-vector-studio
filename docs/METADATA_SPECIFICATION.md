@@ -92,8 +92,8 @@ Setiap penyisipan chunk biner ke dalam format PNG wajib memiliki nilai checksum 
 
 ## 4. Penamaan File SEO Adobe Stock (`sanitizeSeoFileName`)
 
-Untuk memenuhi algoritma indexing microstock dan mencegah nama file yang rusak:
-1. Menghilangkan seluruh karakter non-alfanumerik menjadi underscore (`_`).
+Untuk memenuhi kemudahan pembacaan (*human-readable*) dan kompatibilitas microstock:
+1. Mengubah tanda underscore (`_`) dan simbol terlarang menjadi spasi bersih (` `).
 2. Menghapus pola resolusi/rasio teknis seperti `1x1`, `1:1`, `1-1`, `_1x1_`.
 3. Membatasi panjang maksimal nama file hingga 80 karakter.
-4. Akhiran file bersih: `.png`.
+4. Akhiran file bersih: `.png` (misal: `vintage coffee badge isolated on white background.png`).

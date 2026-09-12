@@ -82,7 +82,7 @@ Panduan lengkap langkah demi langkah untuk menggunakan **Agentic AI 2D Vector St
    - Dilengkapi tombol praktis: **Centang Semua** dan **Kosongkan Semua**.
 2. Klik tombol **`[ ⬇️ PNG ]`** pada kartu untuk mengunduh gambar:
    - File PNG otomatis terinjeksi **metadata 3-lapisan (IPTC IIM, EXIF IFD0, Adobe XMP)** sesuai profil aktif.
-   - Nama file otomatis diformat menggunakan **kebab-case murni dengan tanda hubung (`-`)** yang bersih tanpa underscore `_` dan tanpa label `1x1` (misal: `vintage-coffee-badge-isolated-on-white-background.png`).
+   - Nama file otomatis diformat menggunakan **spasi bersih alami (*natural spacing*)** tanpa underscore `_` dan tanpa label `1x1` (misal: `vintage coffee badge isolated on white background.png`).
 3. Anda juga dapat menggunakan tombol **`[ DOWNLOAD SEMUA PNG ]`** untuk mengunduh seluruh hasil batch sekaligus secara sekuensial.
 
 ---

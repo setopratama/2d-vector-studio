@@ -30,9 +30,9 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
   - Menyediakan kotak input khusus 1–2 kata dasar (misal: *"kopi susu"*, *"rubah mekanik"*, *"mobil"*) yang otomatis dikembangkan AI menjadi **4 ide subjek/karakter imajinatif netral** (masing-masing tepat 3–4 kata).
   - Ide subjek dibuat netral dan bebas label gaya teknis (*flat, stencil, badge*) agar tidak bertabrakan saat dipadukan dengan gaya grafis 2D apa pun.
   - Perhitungan token & biaya transparan (~$0.000030 / Rp 0,48 - Rp 0,55 per run).
-- **🏷️ Pembersihan Nama File (Hapus Karakter Underscore `_` & Label Rasio `1x1`/`1:1`)**:
-  - Menghapus seluruh karakter underscore `_` dari nama file gambar yang di-generate maupun diunduh (termasuk storage server disk `img-timestamp-index.png` dan download SEO).
-  - Mengubah penamaan file menjadi format **kebab-case murni dengan tanda hubung (`-`)** yang bersih, rapi, dan ramah SEO tanpa double hyphen, tanpa trailing/leading hyphen, serta tanpa sisa teks `1:1` atau `1x1`.
+- **🏷️ Pembersihan Nama File (Format Spasi Bersih, Hapus Underscore `_` & Rasio `1x1`/`1:1`)**:
+  - Menghapus seluruh karakter underscore `_` dari nama file hasil unduhan maupun penyimpanan disk lokal.
+  - Mengubah penamaan file unduhan menjadi format **spasi bersih alami (*natural spacing*)** yang rapi, mudah dibaca langsung di File Explorer/Finder, dan ramah SEO microstock tanpa double space, tanpa trailing/leading space, serta tanpa sisa teks `1:1` atau `1x1` (misal: `vintage coffee badge isolated on white background.png`).
 - **⚙️ Modal Versi & Saklar Mode UI (*Feature Switcher*)**:
   - Menambahkan tombol badge versi `v1.3.0` di Navbar dan Footer.
   - Pengguna dapat beralih antara **Mode Lengkap (v1.3.0)** dan **Mode Klasik Bersih (v1.0.0)** sesuai selera.
