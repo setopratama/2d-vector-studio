@@ -27,6 +27,8 @@ export async function promptsRoutes(fastify: FastifyInstance) {
         batchId: r.batchId,
         variationIndex: r.variationIndex,
         title: r.title,
+        adobeStockTitle: r.adobeStockTitle || undefined,
+        keywords: r.keywords ? JSON.parse(r.keywords) : undefined,
         rawIdea: r.rawIdea,
         optimizedPrompt: r.optimizedPrompt,
         negativePrompt: r.negativePrompt,
@@ -67,6 +69,8 @@ export async function promptsRoutes(fastify: FastifyInstance) {
         batchId: body.batchId || null,
         variationIndex: body.variationIndex || 1,
         title: body.title,
+        adobeStockTitle: body.adobeStockTitle || null,
+        keywords: body.keywords ? JSON.stringify(body.keywords) : null,
         rawIdea: body.rawIdea,
         optimizedPrompt: body.optimizedPrompt,
         negativePrompt: body.negativePrompt || null,
@@ -114,6 +118,8 @@ export async function promptsRoutes(fastify: FastifyInstance) {
           batchId: body.batchId || null,
           variationIndex: body.variationIndex || 1,
           title: body.title,
+          adobeStockTitle: body.adobeStockTitle || null,
+          keywords: body.keywords ? JSON.stringify(body.keywords) : null,
           rawIdea: body.rawIdea,
           optimizedPrompt: body.optimizedPrompt,
           negativePrompt: body.negativePrompt || null,
@@ -152,24 +158,56 @@ export async function promptsRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // POST /api/expand-keywords - Expand 1-2 words into 4 creative 3-4 word subject concepts
+  fastify.post('/api/expand-keywords', async (request, reply) => {
+    const body: any = request.body || {};
+    try {
+      const { expandSingleKeywordToConcepts } = await import('../services/prompt-engine.service');
+      const result = await expandSingleKeywordToConcepts({
+        keyword: body.keyword || '',
+      }, body.model);
+      return { success: true, ...result };
+    } catch (err: any) {
+      const { logSystemError } = await import('../services/error-logger.service');
+      await logSystemError({
+        type: 'prompt-expansion',
+        model: body.model || process.env.OPENROUTER_PROMPT_MODEL || 'deepseek/deepseek-v4.1-flash',
+        statusCode: err.statusCode || 500,
+        message: err.message || 'Keyword expansion failed',
+        promptSnippet: body.keyword || 'N/A',
+        stack: err.stack,
+      });
+      reply.status(500).send({ error: err.message });
+    }
+  });
+
   // POST /api/generate-prompt - AI Prompt Expansion via OpenRouter / Custom Endpoint
   fastify.post('/api/generate-prompt', async (request, reply) => {
+    const body: any = request.body || {};
     try {
       const { generateOptimizedPrompt } = await import('../services/prompt-engine.service');
-      const body: any = request.body || {};
       const result = await generateOptimizedPrompt(body, body.model);
       return result;
     } catch (err: any) {
+      const { logSystemError } = await import('../services/error-logger.service');
+      await logSystemError({
+        type: 'prompt-expansion',
+        model: body.model || process.env.OPENROUTER_PROMPT_MODEL || 'deepseek/deepseek-v4.1-flash',
+        statusCode: err.statusCode || 500,
+        message: err.message || 'Prompt expansion failed',
+        promptSnippet: body.rawIdea || 'N/A',
+        stack: err.stack,
+      });
       reply.status(500).send({ error: err.message });
     }
   });
 
   // POST /api/generate-image - AI Image Generation via OpenRouter / Custom Endpoint
   fastify.post('/api/generate-image', async (request, reply) => {
+    const body: any = request.body || {};
+    const prompt = body.prompt;
     try {
       const { generateOpenRouterImage, saveGeneratedImagesByDate } = await import('../services/image-generator.service');
-      const body: any = request.body || {};
-      const prompt = body.prompt;
       if (!prompt) {
         return reply.status(400).send({ error: 'Prompt is required' });
       }
@@ -177,8 +215,33 @@ export async function promptsRoutes(fastify: FastifyInstance) {
       const saved = await saveGeneratedImagesByDate(rawRes.data || []);
       return { success: true, images: saved };
     } catch (err: any) {
-      reply.status(500).send({ error: err.message });
+      console.error('[Fastify /api/generate-image Error]:', err);
+      const { logSystemError } = await import('../services/error-logger.service');
+      await logSystemError({
+        type: 'render-image',
+        model: body.model || process.env.OPENROUTER_IMAGE_MODEL || 'openai/gpt-image-2.5-sunburst',
+        statusCode: err.statusCode || 500,
+        message: err.message || 'Image generation failed',
+        promptSnippet: prompt ? prompt.slice(0, 300) : 'N/A',
+        details: err.responseBody || err.message,
+        stack: err.stack,
+      });
+      reply.status(500).send({ error: err.message || 'Image generation failed' });
     }
+  });
+
+  // GET /api/logs/errors - Dapatkan daftar riwayat error sistem terbaru
+  fastify.get('/api/logs/errors', async () => {
+    const { getRecentErrorLogs } = await import('../services/error-logger.service');
+    const logs = getRecentErrorLogs();
+    return { success: true, logs };
+  });
+
+  // DELETE /api/logs/errors - Bersihkan daftar log error di memori
+  fastify.delete('/api/logs/errors', async () => {
+    const { clearInMemoryErrorLogs } = await import('../services/error-logger.service');
+    clearInMemoryErrorLogs();
+    return { success: true, message: 'Log error berhasil dibersihkan' };
   });
 
   // GET /api/currency/exchange-rate - Daily cached rate from api.co.id with SQLite history

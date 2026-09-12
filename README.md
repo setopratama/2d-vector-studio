@@ -56,6 +56,27 @@ Terkunci ketat (*Strict Style Locking*) sehingga variasi sudut pandang tidak aka
 - Metadata prompt, token aktual, dan riwayat biaya tersimpan di `data/prompt_studio.db` via `better-sqlite3` + `Drizzle ORM`.
 - File visual tersimpan rapi per tanggal di folder `data/outputs/YYYY-MM-DD/`.
 
+### 9. 🏷️ Injeksi Metadata 3-Lapisan (Zero External Dependencies) & SEO Microstock
+- **100% Native Pure JS / Zero Dependencies**: Tanpa `exiftool`, `sharp`, `piexifjs`, atau library eksternal lainnya. Dibangun manual menggunakan TypedArray native (`Uint8Array`, `ArrayBuffer`, `DataView`) dan tabel bitwise CRC32.
+- **Sinkronisasi Serentak 3 Lapisan (Adobe Stock / Shutterstock / Freepik)**:
+  1. **IPTC IIM**: Segmen APP13 Photoshop 8BIM (`0x0404`), Record 2 (Datasets `2:05`, `2:25`, `2:120`, `2:80`) dengan deklarasi charset UTF-8 (`\x1b%G`).
+  2. **EXIF IFD0**: Tag standar (`ImageDescription`, `Artist`, `Software`) dan Tag Windows XP Extended (`XPTitle`, `XPKeywords`, `XPComment`, `XPAuthor`, `XPSubject`) berformat UCS-2 / UTF-16LE.
+  3. **Adobe XMP Packet**: Chunk PNG `iTXt` (`XML:com.adobe.xmp`) & JPEG APP1 memuat RDF XML Dublin Core (`dc:title`, `dc:description`, `dc:subject`, `dc:creator`) & Photoshop Headline/Credit.
+- **AI Agent Auto SEO Title**: Judul Stock bahasa Inggris teroptimasi dengan batas ketat **maksimal 120 karakter** dilengkapi *live character counter* (`114/120 CHARS`).
+- **10–48 Keywords Microstock**: AI mengekspansi 25–45 kata kunci (*tags*) berbahasa Inggris dengan batasan **maksimal 2 kata per tag**.
+- **Profil Kontributor & Pembersihan Tag (Anti-Reject Microstock)**:
+  - Tersedia modal pengaturan **`[ 👤 Author / Profil Kontributor ]`** untuk mengisi nama Author/Artist/Brand Anda sendiri.
+  - Tag Software default diganti menjadi **`Adobe Illustrator`** (tanpa kata "AI" atau "AI Generator") agar 100% aman dan lolos review di agensi microstock.
+- **Nama File SEO Otomatis**: File yang diunduh otomatis dinamai sesuai judul SEO yang disanitasi (misal: `vintage_coffee_emblem_mascot_badge_1x1.png`).
+- **1-Click Copy Buttons**: Tombol cepat salin *Title*, salin *Keywords Berformat Koma* (`tag1, tag2, tag3`), dan salin *Semua Metadata*.
+
+### 10. 📋 Diagnostic Error Logger & System Log Modal
+- **Pencatatan Otomatis ke Disk & Memori**: Setiap kegagalan render gambar, ekspansi prompt, atau koneksi API otomatis tercatat di `data/logs/error_YYYY-MM-DD.log` lengkap dengan Timestamp, HTTP Status, Nama Model, Prompt, Error Message, dan Stack Trace.
+- **Indikator Badge di Navbar**: Tombol `[ ⚠️ Log Error ]` dengan badge merah menyala otomatis saat terjadi kegagalan render.
+- **Modal Dialog Interaktif**: Memfilter error per kategori (*Render Gambar*, *Prompt AI*), menyalin 1-klik seluruh laporan error ke clipboard, serta tombol bersihkan log.
+- **Shortcut Cerdas**: Jika proses render pada kartu gagal, banner error menyediakan tombol langsung **`[ Lihat Detail Log Error ]`** untuk debugging instan.
+
+
 ---
 
 ## 🛠️ Tech Stack
@@ -64,8 +85,9 @@ Terkunci ketat (*Strict Style Locking*) sehingga variasi sudut pandang tidak aka
 |---|---|
 | **Runtime & Tooling** | Node.js (v20+ LTS), TypeScript, tsx |
 | **Frontend (FE)** | React 19, Vite, Tailwind CSS, Lucide React |
-| **Backend (BE)** | Fastify (Port 3001) |
+| **Backend (BE)** | Fastify (Port 3001, BodyLimit 50MB) |
 | **Database** | SQLite Lokal (`better-sqlite3`), Drizzle ORM |
+| **Error Logging** | File Disk Lokal (`data/logs/`) & In-Memory System Logger |
 | **AI LLM Engine** | OpenRouter API (`deepseek/deepseek-v4-flash-0731` & `openai/gpt-image-2.5-sunburst`) |
 | **Currency API** | api.co.id Exchange Rates (Cached Daily) |
 
@@ -86,23 +108,26 @@ GPTIMAGEGENERATE/
 ├── vite.config.ts              # Konfigurasi Vite & API proxy ke Fastify (:3001)
 ├── data/
 │   ├── prompt_studio.db        # File Database SQLite Lokal
+│   ├── logs/                   # Log error sistem harian (error_YYYY-MM-DD.log)
 │   └── outputs/
 │       └── YYYY-MM-DD/         # File PNG hasil generate tersimpan per tanggal
 ├── server/                     # Backend Fastify + SQLite
-│   ├── index.ts                # Entry point server (Port 3001)
+│   ├── index.ts                # Entry point server (Port 3001, BodyLimit 50MB)
 │   ├── db/
 │   │   ├── client.ts           # Inisialisasi better-sqlite3 & Drizzle
 │   │   └── schema.ts           # Skema tabel prompts & exchange_rates
 │   ├── routes/
-│   │   └── prompts.route.ts    # REST API endpoints
+│   │   └── prompts.route.ts    # REST API endpoints & log routes
 │   └── services/
 │       ├── prompt-engine.service.ts # Engine ekspansi prompt DeepSeek v4
 │       ├── image-generator.service.ts # Engine visual GPT Image 2.5
-│       └── currency.service.ts # Layanan kurs real-time api.co.id
+│       ├── currency.service.ts # Layanan kurs real-time api.co.id
+│       └── error-logger.service.ts # Sistem logging kegagalan render & API
 └── src/                        # Frontend React + Vite
     ├── App.tsx                 # Main application layout & state
     ├── components/
-    │   ├── Navbar.tsx          # Top bar, kurs harian, & tombol Auto-Runner
+    │   ├── Navbar.tsx          # Top bar, kurs harian, tombol Auto-Runner, & badge Log Error
+    │   ├── ErrorLogModal.tsx   # Modal inspeksi log error sistem & salin laporan
     │   ├── AutoRunnerWizardModal.tsx # Modal Wizard 3 langkah (1-50 Batch)
     │   ├── PromptInput.tsx     # Form ide, mode batch, & checklist B&W
     │   ├── CostEstimationCard.tsx # Pra-estimasi token & biaya terpisah
@@ -113,7 +138,11 @@ GPTIMAGEGENERATE/
     │   ├── useAutoRunner.ts    # Hook eksekusi loop 1-50 dengan pause/stop
     │   ├── usePromptGenerator.ts # Hook CRUD prompt & render gambar
     │   ├── useCostEstimator.ts # Hook live token counter
-    │   └── useExchangeRate.ts  # Hook kurs USD -> IDR
+    │   ├── useExchangeRate.ts  # Hook kurs USD -> IDR
+    │   └── useErrorLogs.ts     # Hook manajemen & sinkronisasi log error sistem
+    ├── types/
+    │   ├── prompt.ts           # Tipe data prompt, image, & biaya
+    │   └── errorLog.ts         # Tipe data log error sistem
     └── utils/
         ├── costCalculator.ts   # Formula kalkulasi tarif token & visual
         └── vectorGraphicGenerator.ts # Engine fallback render SVG 2D
@@ -179,6 +208,8 @@ http://localhost:5173
 | `POST` | `/api/generate-image` | Generate visual 1:1 via GPT Image 2.5 Sunburst |
 | `GET` | `/api/currency/exchange-rate` | Ambil kurs USD $\rightarrow$ IDR harian dari `api.co.id` |
 | `GET` | `/api/currency/history` | Riwayat catatan kurs harian di SQLite |
+| `GET` | `/api/logs/errors` | Mengambil riwayat log kegagalan render & API sistem |
+| `DELETE` | `/api/logs/errors` | Membersihkan riwayat log error di memori |
 | `DELETE` | `/api/prompts/:id` | Menghapus kartu tertentu dari database SQLite |
 | `DELETE` | `/api/prompts` | Membersihkan seluruh riwayat SQLite |
 | `GET` | `/api/health` | Health check server Fastify & database SQLite |

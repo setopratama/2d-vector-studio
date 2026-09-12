@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Layers, History, RefreshCw, DollarSign, Sparkles, Zap } from 'lucide-react';
+import { History, RefreshCw, Zap, User } from 'lucide-react';
 import { formatUsd, formatIdr } from '../utils/costCalculator';
 
 interface NavbarProps {
@@ -8,10 +8,12 @@ interface NavbarProps {
   onToggleHistory: () => void;
   onResetWorkspace: () => void;
   onOpenWizard: () => void;
+  onOpenProfileSettings: () => void;
+  onOpenVersionModal?: () => void;
+  authorName: string;
   isHistoryOpen: boolean;
   usdToIdrRate?: number;
-  rateSource?: string;
-  rateDate?: string;
+  showAutoRunner?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -20,15 +22,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleHistory,
   onResetWorkspace,
   onOpenWizard,
+  onOpenProfileSettings,
+  onOpenVersionModal,
+  authorName,
   isHistoryOpen,
   usdToIdrRate = 16000,
-  rateSource = 'cache',
-  rateDate,
+  showAutoRunner = true,
 }) => {
-  const formattedRate = `Rp ${Math.round(usdToIdrRate).toLocaleString('id-ID')}`;
-
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-stone-200">
+    <header className="sticky top-0 z-30 bg-white border-b border-stone-200 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand & Studio Title */}
@@ -41,9 +43,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-bold text-sm sm:text-base uppercase tracking-tight text-stone-900">
                   Vector Studio
                 </span>
-                <span className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 border border-stone-300 text-stone-600">
-                  v2.5 // AGENTIC
-                </span>
+                <button
+                  type="button"
+                  onClick={onOpenVersionModal}
+                  title="Lihat Catatan Rilis Versi & Pengaturan Mode (v1.3.0)"
+                  className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 border border-stone-400 bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-700 transition-colors font-bold cursor-pointer flex items-center gap-1"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                  <span>v1.3.0</span>
+                </button>
               </div>
               <p className="text-[11px] text-stone-500 font-mono tracking-wide hidden sm:block">
                 DEEPSEEK V4 FLASH • GPT IMAGE 2.5 SUNBURST
@@ -51,31 +59,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Session Ledger & Utilities */}
+          {/* Session Ledger & Main Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Auto-Runner Wizard Button (Highlighted) */}
+            {/* Contributor Profile / Metadata Settings Button */}
             <button
-              onClick={onOpenWizard}
-              className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 border border-amber-500 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:translate-y-0.5"
+              onClick={onOpenProfileSettings}
+              title="Atur Nama Author / Artist dan Tag Software untuk Metadata Microstock"
+              className="px-2.5 py-1.5 border border-stone-300 hover:border-stone-900 bg-stone-50 hover:bg-stone-100 text-stone-900 text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <Zap className="w-3.5 h-3.5 fill-stone-900" />
-              <span>Auto-Runner Wizard</span>
+              <User className="w-3.5 h-3.5 text-stone-700" />
+              <span className="hidden md:inline text-[11px]">Author:</span>
+              <span className="text-amber-800 font-bold max-w-[120px] truncate">{authorName}</span>
             </button>
 
-            {/* SQLite Database Active Status Indicator */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 border border-stone-200 bg-stone-50 text-[10px] font-mono font-bold text-emerald-800">
-              <Database className="w-3.5 h-3.5 text-emerald-600" />
-              <span>SQLITE ACTIVE</span>
-            </div>
-
-            {/* Live Exchange Rate Pill (api.co.id 1x/day) */}
-            <div
-              title={`Kurs Harian: 1 USD = ${formattedRate} (${rateSource === 'api.co.id' ? 'Live api.co.id' : rateSource === 'cache' ? 'Cache Harian' : 'Default'} - ${rateDate || 'Hari Ini'})`}
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 border border-stone-200 bg-stone-50 text-[11px] font-mono text-stone-600 cursor-help"
-            >
-              <span className={`w-1.5 h-1.5 inline-block ${rateSource === 'api.co.id' || rateSource === 'cache' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-              <span>1 USD = {formattedRate}</span>
-            </div>
+            {/* Auto-Runner Wizard Button (Highlighted) */}
+            {showAutoRunner && (
+              <button
+                onClick={onOpenWizard}
+                className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 border border-amber-500 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:translate-y-0.5 cursor-pointer"
+              >
+                <Zap className="w-3.5 h-3.5 fill-stone-900" />
+                <span>Auto-Runner</span>
+              </button>
+            )}
 
             {/* Total Session Spend Tracker */}
             <div className="flex items-center gap-2 px-3 py-1 border border-stone-200 bg-white text-xs">
@@ -96,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onResetWorkspace}
               title="Reset Workspace"
-              className="px-2.5 py-1.5 border border-stone-200 text-stone-700 hover:border-stone-900 hover:text-stone-900 text-xs uppercase font-mono tracking-wider transition-colors flex items-center gap-1"
+              className="px-2.5 py-1.5 border border-stone-200 text-stone-700 hover:border-stone-900 hover:text-stone-900 text-xs uppercase font-mono tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Baru</span>
@@ -105,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* History Toggle Button */}
             <button
               onClick={onToggleHistory}
-              className={`px-3 py-1.5 border text-xs uppercase font-mono tracking-wider transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 border text-xs uppercase font-mono tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ${
                 isHistoryOpen
                   ? 'bg-stone-900 text-white border-stone-900'
                   : 'bg-white text-stone-900 border-stone-300 hover:border-stone-900'

@@ -13,16 +13,23 @@ import {
   Star,
   ArrowRight,
   Folder,
-  SlidersHorizontal,
   Layers,
   Hourglass,
-  XCircle
+  XCircle,
+  Tag,
+  FileText,
+  CheckCircle2,
 } from 'lucide-react';
 import { formatUsd, formatIdr, PRICING_CONFIG } from '../utils/costCalculator';
+import { CardLoadingBar } from './CardLoadingBar';
+import { sanitizeSeoFileName } from '../utils/pngMetadataHelper';
+import { ContributorProfile } from '../hooks/useContributorProfile';
 
 interface UnifiedVariationCardProps {
   item: PromptItem;
   index: number;
+  contributorProfile?: ContributorProfile;
+  onOpenProfileSettings?: () => void;
   onGenerateImage: (promptId: string) => void;
   onRegenerateImage: (promptId: string) => void;
   onRegeneratePrompt?: (promptId: string) => void;
@@ -40,6 +47,8 @@ interface UnifiedVariationCardProps {
 export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   item,
   index,
+  contributorProfile,
+  onOpenProfileSettings,
   onGenerateImage,
   onRegenerateImage,
   onRegeneratePrompt,
@@ -49,7 +58,11 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   onToggleFavorite,
 }) => {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedTitle, setCopiedTitle] = useState(false);
+  const [copiedKeywordsComma, setCopiedKeywordsComma] = useState(false);
+  const [copiedKeywordsAll, setCopiedKeywordsAll] = useState(false);
   const [copiedVersionIdx, setCopiedVersionIdx] = useState<number | null>(null);
+  const [isDownloadingWithMeta, setIsDownloadingWithMeta] = useState(false);
   const [activeVersionIndex, setActiveVersionIndex] = useState<number>(
     item.images.length > 0 ? item.images.length - 1 : 0
   );
@@ -75,6 +88,8 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
         {
           version: 1,
           title: item.title,
+          adobeStockTitle: item.adobeStockTitle,
+          keywords: item.keywords,
           optimizedPrompt: item.optimizedPrompt,
           negativePrompt: item.negativePrompt,
           vectorStyle: item.vectorStyle,
@@ -91,10 +106,40 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
 
   const activePromptVersion = promptVersions[activePromptVersionIndex] || promptVersions[0];
 
+  // Active SEO Title & Keywords
+  const activeStockTitle = activePromptVersion.adobeStockTitle || item.adobeStockTitle || item.title;
+  const activeKeywords = activePromptVersion.keywords || item.keywords || [
+    ...item.rawIdea.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
+    'vector', 'illustration', 'icon', 'graphic', 'isolated', 'white background', '2d vector'
+  ];
+
+  const titleLength = activeStockTitle.length;
+  const isTitleValidLength = titleLength <= 120;
+
   const handleCopyPrompt = async () => {
-    await navigator.clipboard.writeText(item.optimizedPrompt);
+    await navigator.clipboard.writeText(activePromptVersion.optimizedPrompt);
     setCopiedPrompt(true);
     setTimeout(() => setCopiedPrompt(false), 2000);
+  };
+
+  const handleCopyTitle = async () => {
+    await navigator.clipboard.writeText(activeStockTitle);
+    setCopiedTitle(true);
+    setTimeout(() => setCopiedTitle(false), 2000);
+  };
+
+  const handleCopyKeywordsComma = async () => {
+    const commaSeparated = activeKeywords.join(', ');
+    await navigator.clipboard.writeText(commaSeparated);
+    setCopiedKeywordsComma(true);
+    setTimeout(() => setCopiedKeywordsComma(false), 2000);
+  };
+
+  const handleCopyKeywordsAll = async () => {
+    const text = `Title: ${activeStockTitle}\n\nKeywords: ${activeKeywords.join(', ')}`;
+    await navigator.clipboard.writeText(text);
+    setCopiedKeywordsAll(true);
+    setTimeout(() => setCopiedKeywordsAll(false), 2000);
   };
 
   const handleCopySpecificVersion = async (text: string, vIdx: number) => {
@@ -103,18 +148,41 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     setTimeout(() => setCopiedVersionIdx(null), 2000);
   };
 
-  const handleDownload = () => {
+  // Download with binary metadata injection and SEO Title naming
+  const handleDownloadWithMetadata = async () => {
     if (!activeImage) return;
-    const downloadUrl = activeImage.dataUrl || `/${activeImage.imagePath}`;
-    const safeTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 25);
-    const fileName = `${safeTitle}_v${activeImage.version}_1x1.png`;
+    setIsDownloadingWithMeta(true);
+    try {
+      const downloadUrl = activeImage.dataUrl || (activeImage.imagePath ? (activeImage.imagePath.startsWith('/') ? activeImage.imagePath : `/${activeImage.imagePath}`) : '');
+      const fileName = sanitizeSeoFileName(activeStockTitle);
 
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const { downloadSingleImage } = await import('../utils/downloadHelper');
+      await downloadSingleImage(downloadUrl, fileName, {
+        title: activeStockTitle,
+        keywords: activeKeywords,
+        description: activePromptVersion.optimizedPrompt,
+        author: contributorProfile?.authorName || 'Vector Artist',
+        software: contributorProfile?.softwareName || 'Adobe Illustrator',
+        credit: contributorProfile?.credit,
+        source: contributorProfile?.source,
+      });
+    } finally {
+      setTimeout(() => setIsDownloadingWithMeta(false), 800);
+    }
+  };
+
+  const handleStandardDownload = async () => {
+    if (!activeImage) return;
+    const downloadUrl = activeImage.dataUrl || (activeImage.imagePath ? (activeImage.imagePath.startsWith('/') ? activeImage.imagePath : `/${activeImage.imagePath}`) : '');
+    const fileName = sanitizeSeoFileName(activeStockTitle);
+
+    const { downloadSingleImage } = await import('../utils/downloadHelper');
+    await downloadSingleImage(downloadUrl, fileName, {
+      title: activeStockTitle,
+      keywords: activeKeywords,
+      author: contributorProfile?.authorName || 'Vector Artist',
+      software: contributorProfile?.softwareName || 'Adobe Illustrator',
+    });
   };
 
   const imageTariffUsd = PRICING_CONFIG.IMAGE_FLAT_COST_PER_UNIT_USD;
@@ -190,13 +258,13 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
       </div>
 
       {/* ==================================================================== */}
-      {/* 2. DUA KOLOM: KIRI (PROMPT & TOKEN) | KANAN (GAMBAR & TABEL BIAYA)   */}
+      {/* 2. DUA KOLOM: KIRI (PROMPT, SEO META & TOKEN) | KANAN (GAMBAR & TABEL)*/}
       {/* ==================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-stone-300">
         {/* ------------------------------------------------------------------ */}
-        {/* KOLOM KIRI: PROMPT & RINCIAN TOKEN (7 COLS)                        */}
+        {/* KOLOM KIRI: PROMPT, SEO METADATA & TOKEN (7 COLS)                  */}
         {/* ------------------------------------------------------------------ */}
-        <div className="lg:col-span-7 p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 p-5 sm:p-6 space-y-5 flex flex-col justify-between">
           <div className="space-y-4">
             {/* Active Prompt Box (Top Highlighted) */}
             <div className="space-y-2">
@@ -250,6 +318,155 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
               {/* Active Prompt Text Display */}
               <div className="p-3.5 bg-stone-900 text-stone-50 border-2 border-stone-900 font-mono text-xs leading-relaxed select-all shadow-xs">
                 "{activePromptVersion.optimizedPrompt}"
+              </div>
+            </div>
+
+            {/* Negative Prompt */}
+            {activePromptVersion.negativePrompt && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-mono text-stone-600 font-bold uppercase tracking-wider">
+                  <span>Negative Prompt (Pencegah Foto / 3D):</span>
+                </div>
+                <div className="p-2.5 bg-stone-100 border border-stone-300 text-stone-700 font-mono text-[11px] leading-snug select-all">
+                  {activePromptVersion.negativePrompt}
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* FITUR BARU: ADOBE STOCK SEO TITLE & KEYWORDS METADATA          */}
+            {/* ============================================================== */}
+            <div className="p-3.5 bg-amber-50/50 border-2 border-amber-300/80 space-y-3 shadow-2xs">
+              {/* Author Info Bar */}
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] font-mono text-amber-950 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold uppercase">Author:</span>
+                  <span className="bg-white px-2 py-0.5 border border-amber-300 font-bold text-stone-900">
+                    {contributorProfile?.authorName || 'Vector Artist'}
+                  </span>
+                  <span className="text-stone-400">•</span>
+                  <span className="text-stone-600 hidden sm:inline">
+                    Tool: <strong>{contributorProfile?.softwareName || 'Adobe Illustrator'}</strong>
+                  </span>
+                </div>
+
+                {onOpenProfileSettings && (
+                  <button
+                    type="button"
+                    onClick={onOpenProfileSettings}
+                    className="text-[10px] text-amber-900 hover:text-stone-900 underline font-bold transition-colors cursor-pointer"
+                    title="Ubah nama author dan setting metadata kontributor"
+                  >
+                    Ubah Profil Kontributor ⚙️
+                  </button>
+                )}
+              </div>
+
+              {/* 1. Adobe Stock Title */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-amber-700" />
+                    <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
+                      Adobe Stock SEO Title (English):
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.2 font-bold ${
+                        isTitleValidLength
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-red-100 text-red-800 border border-red-300'
+                      }`}
+                    >
+                      {titleLength}/120 CHARS
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={handleCopyTitle}
+                    className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+                  >
+                    {copiedTitle ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700">Disalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-amber-700" />
+                        <span>Salin Title</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-2.5 bg-white border border-amber-300 text-stone-900 font-mono text-xs font-medium select-all leading-relaxed">
+                  {activeStockTitle}
+                </div>
+              </div>
+
+              {/* 2. Adobe Stock Keywords Cloud */}
+              <div className="space-y-2 pt-1 border-t border-amber-200">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-amber-700" />
+                    <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
+                      Keywords Microstock:
+                    </span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-200 text-amber-900">
+                      {activeKeywords.length} TAGS • MAX 2 KATA
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleCopyKeywordsComma}
+                      className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+                      title="Salin semua keyword dipisahkan koma untuk form upload microstock"
+                    >
+                      {copiedKeywordsComma ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-700">Disalin</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-amber-700" />
+                          <span>Salin Koma</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleCopyKeywordsAll}
+                      className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+                      title="Salin Title + Semua Keywords sekaligus"
+                    >
+                      {copiedKeywordsAll ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-700">Semua Disalin</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-amber-700" />
+                          <span>Salin Semua</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Keywords Tag Cloud */}
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-white border border-amber-300">
+                  {activeKeywords.map((tag, tIdx) => (
+                    <span
+                      key={tIdx}
+                      className="text-[10px] font-mono px-2 py-0.5 bg-stone-100 hover:bg-amber-100 text-stone-800 border border-stone-200 rounded-none cursor-default select-all"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -497,7 +714,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
               <div className="bg-white border border-stone-200 p-2 font-mono text-[9px] text-stone-600 truncate select-all flex items-center gap-1">
                 <Folder className="w-3 h-3 text-stone-400 shrink-0" />
                 <span className="truncate">
-                  data/{activeImage?.imagePath || `outputs/${dateStr}/img_${item.id}_v${activeImage?.version || 1}.png`}
+                  data/{activeImage?.imagePath || `outputs/${dateStr}/${sanitizeSeoFileName(activeStockTitle)}`}
                 </span>
               </div>
 
@@ -551,53 +768,88 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                 </table>
               </div>
 
-              {/* Action Buttons: Download & Regenerate */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {/* ACTION BUTTONS: Download With Metadata SEO & Regenerate */}
+              <div className="space-y-2 pt-1">
+                {/* Primary Button: Download + Embed Metadata SEO */}
                 <button
-                  onClick={handleDownload}
-                  className="py-2.5 px-3 bg-white hover:bg-stone-100 text-stone-900 border-2 border-stone-900 font-mono text-[11px] uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 active:translate-y-[1px] cursor-pointer"
+                  onClick={handleDownloadWithMetadata}
+                  disabled={isDownloadingWithMeta}
+                  className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-stone-950 border-2 border-stone-900 font-mono text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 active:translate-y-[1px] cursor-pointer shadow-2xs"
+                  title="Download PNG dan sematkan Title & Keywords ke metadata binary chunk (IPTC/XMP) otomatis"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>DOWNLOAD PNG</span>
+                  {isDownloadingWithMeta ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-stone-900 border-t-transparent animate-spin inline-block"></span>
+                      <span>MENYEMATKAN METADATA...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="w-3.5 h-3.5 text-stone-950" />
+                      <span>DOWNLOAD PNG + SEMATKAN METADATA SEO</span>
+                    </>
+                  )}
                 </button>
 
-                {isProcessing ? (
-                  <div className="py-2.5 px-3 bg-amber-500 text-stone-900 border-2 border-amber-600 font-mono text-[11px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
-                    <span className="w-3 h-3 border-2 border-stone-900 border-t-transparent animate-spin inline-block"></span>
-                    <span>RENDER...</span>
-                  </div>
-                ) : isQueued ? (
-                  <div className="flex items-center gap-1">
-                    <div className="flex-1 py-2.5 px-2 bg-indigo-50 text-indigo-900 border-2 border-indigo-400 font-mono text-[10px] uppercase font-bold tracking-wider flex items-center justify-center gap-1">
-                      <Hourglass className="w-3 h-3 text-indigo-600 animate-spin" />
-                      <span>ANTREAN #{queuePosition}</span>
-                    </div>
-                    {onCancelQueueTask && (
-                      <button
-                        onClick={() => onCancelQueueTask(item.id)}
-                        title="Batalkan dari antrean"
-                        className="p-2.5 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border-2 border-stone-300 hover:border-red-400 font-mono transition-colors cursor-pointer"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
-                    onClick={() => onRegenerateImage(item.id)}
-                    title="Render versi baru (+ $0.020)"
-                    className="py-2.5 px-3 text-[11px] font-mono uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 bg-stone-900 text-white hover:bg-stone-800 border-2 border-stone-900 active:translate-y-[1px] cursor-pointer"
+                    onClick={handleStandardDownload}
+                    className="py-2 px-3 bg-white hover:bg-stone-100 text-stone-900 border-2 border-stone-900 font-mono text-[11px] uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 active:translate-y-[1px] cursor-pointer"
+                    title="Download PNG dengan nama file SEO"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>REGENERATE (+{formatUsd(imageTariffUsd, 4)})</span>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>DOWNLOAD PNG</span>
                   </button>
-                )}
+
+                  {isProcessing ? (
+                    <div className="py-2 px-3 bg-amber-500 text-stone-900 border-2 border-amber-600 font-mono text-[11px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
+                      <span className="w-3 h-3 border-2 border-stone-900 border-t-transparent animate-spin inline-block"></span>
+                      <span>RENDER...</span>
+                    </div>
+                  ) : isQueued ? (
+                    <div className="flex items-center gap-1">
+                      <div className="flex-1 py-2 px-2 bg-indigo-50 text-indigo-900 border-2 border-indigo-400 font-mono text-[10px] uppercase font-bold tracking-wider flex items-center justify-center gap-1">
+                        <Hourglass className="w-3 h-3 text-indigo-600 animate-spin" />
+                        <span>ANTREAN #{queuePosition}</span>
+                      </div>
+                      {onCancelQueueTask && (
+                        <button
+                          onClick={() => onCancelQueueTask(item.id)}
+                          title="Batalkan dari antrean"
+                          className="p-2 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border-2 border-stone-300 hover:border-red-400 font-mono transition-colors cursor-pointer"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => onRegenerateImage(item.id)}
+                      title="Render versi baru (+ $0.020)"
+                      className="py-2 px-3 text-[11px] font-mono uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 bg-stone-900 text-white hover:bg-stone-800 border-2 border-stone-900 active:translate-y-[1px] cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>REGENERATE (+{formatUsd(imageTariffUsd, 4)})</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Progress Loading Bar Kecil di Bawah Card dengan Hitungan 0-100% */}
+      <CardLoadingBar
+        isLoading={isProcessing}
+        label={
+          queueStatus?.taskType === 'regenerate-prompt'
+            ? `MEREGENERASI PROMPT VARIATION #${index + 1}...`
+            : `RENDERING GAMBAR 2D VECTOR CARD #${index + 1}...`
+        }
+        completedLabel={`CARD #${index + 1} SELESAI DIPROSES!`}
+        estimatedDurationMs={queueStatus?.taskType === 'regenerate-prompt' ? 3500 : 20000}
+        colorScheme="amber"
+      />
     </div>
   );
 };
-

@@ -28,6 +28,18 @@ export function usePromptGenerator() {
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Synchronized refs to avoid stale closure state during async FIFO queue execution
+  const activePromptsRef = useRef<PromptItem[]>(activePrompts);
+  const historyRef = useRef<PromptItem[]>(history);
+
+  useEffect(() => {
+    activePromptsRef.current = activePrompts;
+  }, [activePrompts]);
+
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
+
   // FIFO Task Queue State & Refs
   const [taskQueue, setTaskQueue] = useState<QueueTask[]>([]);
   const taskQueueRef = useRef<QueueTask[]>([]);
@@ -73,10 +85,11 @@ export function usePromptGenerator() {
     loadFromDb();
   }, []);
 
-  // Sync history to localStorage
+  // Sync history to localStorage (strip heavy base64 data to prevent QuotaExceededError)
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      const cleanHistory = history.map(cleanItemForDb);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanHistory));
     } catch (e) {
       console.error('Failed to save history to localStorage', e);
     }
@@ -131,18 +144,22 @@ export function usePromptGenerator() {
    * Helper to update prompt in activePrompts, history, and SQLite DB
    */
   const updatePromptInStateAndHistory = (updated: PromptItem) => {
-    setActivePrompts((prev) =>
-      prev.map((p) => (p.id === updated.id ? updated : p))
-    );
+    setActivePrompts((prev) => {
+      const next = prev.map((p) => (p.id === updated.id ? updated : p));
+      activePromptsRef.current = next;
+      return next;
+    });
     setHistory((prev) => {
       const idx = prev.findIndex((p) => p.id === updated.id);
+      let next: PromptItem[];
       if (idx >= 0) {
-        const next = [...prev];
+        next = [...prev];
         next[idx] = updated;
-        return next;
       } else {
-        return [updated, ...prev];
+        next = [updated, ...prev];
       }
+      historyRef.current = next;
+      return next;
     });
 
     // Save to SQLite
@@ -153,6 +170,7 @@ export function usePromptGenerator() {
    * Helper to bulk upsert multiple prompts
    */
   const setBulkPromptsInStateAndHistory = (newItems: PromptItem[]) => {
+    activePromptsRef.current = newItems;
     setActivePrompts(newItems);
     setHistory((prev) => {
       const map = new Map<string, PromptItem>();
@@ -162,7 +180,9 @@ export function usePromptGenerator() {
           map.set(item.id, item);
         }
       });
-      return Array.from(map.values());
+      const next = Array.from(map.values());
+      historyRef.current = next;
+      return next;
     });
 
     // Save all to SQLite
@@ -252,7 +272,7 @@ export function usePromptGenerator() {
       return;
     }
 
-    const target = activePrompts.find((p) => p.id === promptId) || history.find((p) => p.id === promptId);
+    const target = activePromptsRef.current.find((p) => p.id === promptId) || historyRef.current.find((p) => p.id === promptId);
     if (!target) return;
 
     const now = Date.now();
@@ -276,15 +296,19 @@ export function usePromptGenerator() {
           if (imgData.images && imgData.images.length > 0) {
             const firstImg = imgData.images[0];
             relativePath = firstImg.relativePath;
-            pngDataUrl = firstImg.dataUrl || `/${firstImg.relativePath}`;
+            pngDataUrl = `/${firstImg.relativePath}`;
             realApiSuccess = true;
           }
+        } else {
+          const errData = await res.json().catch(() => ({ error: res.statusText }));
+          console.error('[API Generate Image Error]:', errData);
+          setErrorMessage(`API Image Error [${res.status}]: ${errData.error || res.statusText}`);
         }
-      } catch (apiErr) {
-        console.warn('Real AI Image generation API fallback:', apiErr);
+      } catch (apiErr: any) {
+        console.warn('Real AI Image generation API error:', apiErr);
       }
 
-      // Fallback to client-side vector generator if offline
+      // Fallback to client-side vector generator if offline or API failed
       if (!realApiSuccess) {
         const styleVariantIndex = target.variationIndex ? target.variationIndex - 1 : 0;
         const svgUrl = generate2DVectorSvgDataUrl(
@@ -342,7 +366,7 @@ export function usePromptGenerator() {
       return;
     }
 
-    const target = activePrompts.find((p) => p.id === promptId) || history.find((p) => p.id === promptId);
+    const target = activePromptsRef.current.find((p) => p.id === promptId) || historyRef.current.find((p) => p.id === promptId);
     if (!target) return;
 
     try {
@@ -388,12 +412,16 @@ export function usePromptGenerator() {
           const newPromptCostIdr = aiData.usage?.promptCostIdr || target.promptCostIdr;
 
           const newTitle = aiData.title ? `${aiData.title} [v${nextVersionNum}: ${angle.style}]` : `${target.title} (v${nextVersionNum})`;
+          const newAdobeStockTitle = aiData.adobeStockTitle || target.adobeStockTitle;
+          const newKeywords = aiData.keywords || target.keywords;
           const newNegativePrompt = aiData.negativePrompt || target.negativePrompt;
           const newVectorStyle = aiData.vectorStyle || target.vectorStyle;
 
           const newVersionObj = {
             version: nextVersionNum,
             title: newTitle,
+            adobeStockTitle: newAdobeStockTitle,
+            keywords: newKeywords,
             optimizedPrompt: aiData.optimizedPrompt,
             negativePrompt: newNegativePrompt,
             vectorStyle: newVectorStyle,
@@ -413,6 +441,8 @@ export function usePromptGenerator() {
           const updated: PromptItem = {
             ...target,
             title: newTitle,
+            adobeStockTitle: newAdobeStockTitle,
+            keywords: newKeywords,
             optimizedPrompt: aiData.optimizedPrompt,
             negativePrompt: newNegativePrompt,
             vectorStyle: newVectorStyle,
@@ -640,6 +670,13 @@ export function usePromptGenerator() {
         let promptCostUsd = ((inputTokens * PRICING_CONFIG.PROMPT_INPUT_PER_TOKEN_USD) + (outputTokens * PRICING_CONFIG.PROMPT_OUTPUT_PER_TOKEN_USD)).toFixed(6);
         let promptCostIdr = formatIdr(parseFloat(promptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
 
+        let adobeStockTitle = `${concept.slice(0, 70)} 2D Vector Illustration Icon Isolated on White Background`;
+        let keywords: string[] = [
+          ...concept.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
+          'vector', 'illustration', 'icon', 'graphic', 'design', 'flat design',
+          'isolated', 'white background', 'clipart', '2d vector', 'stock asset'
+        ];
+
         try {
           const aiRes = await fetch('/api/generate-prompt', {
             method: 'POST',
@@ -659,6 +696,8 @@ export function usePromptGenerator() {
             if (aiData.optimizedPrompt) {
               optimizedPrompt = aiData.optimizedPrompt;
               if (aiData.title) title = `${aiData.title} [Var #${idx + 1}]`;
+              if (aiData.adobeStockTitle) adobeStockTitle = aiData.adobeStockTitle;
+              if (Array.isArray(aiData.keywords) && aiData.keywords.length > 0) keywords = aiData.keywords;
               if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
               if (aiData.vectorStyle) vectorStyle = aiData.vectorStyle;
               if (aiData.usage) {
@@ -676,6 +715,8 @@ export function usePromptGenerator() {
         const initialPromptVersion = {
           version: 1,
           title,
+          adobeStockTitle,
+          keywords,
           optimizedPrompt,
           negativePrompt,
           vectorStyle,
@@ -689,6 +730,8 @@ export function usePromptGenerator() {
           id: promptId,
           batchId,
           title,
+          adobeStockTitle,
+          keywords,
           rawIdea: concept,
           optimizedPrompt,
           negativePrompt,
@@ -753,28 +796,35 @@ export function usePromptGenerator() {
   };
 
   /**
-   * Batch Download: Download all generated images across all cards
+   * Action: Batch Download all generated PNGs with metadata injection
    */
-  const handleDownloadAllImages = () => {
+  const handleDownloadAllImages = async (profile?: { authorName?: string; softwareName?: string; credit?: string; source?: string }) => {
     const itemsWithImages = activePrompts.filter((p) => p.images.length > 0);
     if (itemsWithImages.length === 0) return;
 
-    itemsWithImages.forEach((item, index) => {
+    const { sanitizeSeoFileName } = await import('../utils/imageMetadataInjector');
+    const downloadList = itemsWithImages.map((item) => {
       const activeImg = item.images[item.images.length - 1];
-      if (!activeImg || !activeImg.dataUrl) return;
+      const seoTitle = item.adobeStockTitle || item.title;
+      const fileName = sanitizeSeoFileName(seoTitle);
+      const url = activeImg.dataUrl || (activeImg.imagePath ? (activeImg.imagePath.startsWith('/') ? activeImg.imagePath : `/${activeImg.imagePath}`) : '');
+      return {
+        url,
+        fileName,
+        metadata: {
+          title: seoTitle,
+          keywords: item.keywords || [],
+          description: item.optimizedPrompt,
+          author: profile?.authorName || 'Vector Artist',
+          software: profile?.softwareName || 'Adobe Illustrator',
+          credit: profile?.credit,
+          source: profile?.source,
+        },
+      };
+    }).filter((d) => Boolean(d.url));
 
-      setTimeout(() => {
-        const safeTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 25);
-        const fileName = `${safeTitle}_v${activeImg.version}_1x1.png`;
-
-        const link = document.createElement('a');
-        link.href = activeImg.dataUrl!;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, index * 250);
-    });
+    const { downloadMultipleImagesSequentially } = await import('../utils/downloadHelper');
+    await downloadMultipleImagesSequentially(downloadList, 400);
   };
 
   /**

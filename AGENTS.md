@@ -71,28 +71,32 @@ GPTIMAGEGENERATE/
 ├── vite.config.ts              # Konfigurasi Vite (termasuk proxy API ke localhost:3001)
 ├── data/                       # Direktori data lokal (SQLite & Hasil Gambar)
 │   ├── prompt_studio.db        # File SQLite Lokal (better-sqlite3 + Drizzle)
+│   ├── logs/                   # Log error sistem harian (error_YYYY-MM-DD.log)
 │   └── outputs/                # Folder penyimpanan gambar khusus berdasarkan tanggal generate
 │       └── YYYY-MM-DD/         # Subfolder tanggal (misal: 2026-09-10/img_xxx_v1.png)
 ├── server/                     # BACKEND (Fastify + SQLite)
-│   ├── index.ts                # Server entry point & setup port (3001)
+│   ├── index.ts                # Server entry point & setup port (3001, BodyLimit 50MB)
 │   ├── db/
 │   │   ├── client.ts           # Inisialisasi better-sqlite3 & Drizzle
 │   │   └── schema.ts           # Definisi tabel SQLite prompts & exchange_rates
 │   ├── routes/
-│   │   └── prompts.route.ts    # CRUD SQLite, AI routes, & Currency routes
+│   │   └── prompts.route.ts    # CRUD SQLite, AI routes, Currency, & Error Log routes
 │   └── services/
 │       ├── prompt-engine.service.ts # DeepSeek v4 prompt expansion & style locking
 │       ├── image-generator.service.ts # GPT Image 2.5 Sunburst generator & storage
-│       └── currency.service.ts # Kurs dinamis real-time via api.co.id + cache
+│       ├── currency.service.ts # Kurs dinamis real-time via api.co.id + cache
+│       └── error-logger.service.ts # Sistem logging kegagalan render & API sistem
 └── src/                        # FRONTEND (React + Vite)
     ├── main.tsx                # React root
-    ├── App.tsx                 # Main layout alur batch & master controls
+    ├── App.tsx                 # Main layout alur batch, error banner, & master controls
     ├── index.css               # Tailwind & font imports (Inter, IBM Plex Mono)
     ├── components/
-    │   ├── Navbar.tsx          # Top bar minimalis, live exchange rate, & tombol Auto-Runner
+    │   ├── Navbar.tsx          # Top bar minimalis, live exchange rate, tombol Auto-Runner & badge Log Error
+    │   ├── ErrorLogModal.tsx   # Modal inspeksi log error & salin laporan sistem
     │   ├── AutoRunnerWizardModal.tsx # Modal Wizard 3 langkah (1-50 Batch Auto Pipeline)
     │   ├── PromptInput.tsx     # Form ide + mode Multi-Variasi/Multi-Keyword + checklist B&W
     │   ├── CostEstimationCard.tsx # Pra-estimasi token & biaya batch terpisah
+    │   ├── CardLoadingBar.tsx  # Bar progress linier animasi shimmer (0-100%)
     │   ├── UnifiedVariationCard.tsx # Kartu mandiri side-by-side: Prompt KIRI, Gambar & Tabel KANAN
     │   ├── BatchCardsGrid.tsx  # Kontainer grid card mandiri + master batch actions
     │   └── HistorySidebar.tsx  # Drawer riwayat prompt dari SQLite + filter pencarian
@@ -100,14 +104,16 @@ GPTIMAGEGENERATE/
     │   ├── usePromptGenerator.ts # Hook request generate prompt, gambar, dan sync ke SQLite DB
     │   ├── useAutoRunner.ts      # Engine eksekusi sekuensial batch 1-50 dengan pause/stop
     │   ├── useCostEstimator.ts   # Hook live token counter & kalkulator biaya batch dinamis
-    │   └── useExchangeRate.ts    # Hook kurs harian dinamis USD -> IDR
+    │   ├── useExchangeRate.ts    # Hook kurs harian dinamis USD -> IDR
+    │   └── useErrorLogs.ts       # Hook manajemen & sinkronisasi log error sistem
     ├── utils/
     │   ├── costCalculator.ts     # Formula kalkulasi token & tarif DeepSeek + GPT Image 2.5
     │   └── vectorGraphicGenerator.ts # Engine visual 2D vector 1:1 multi-style & konverter PNG
     ├── data/
     │   └── presets.ts            # Presets gaya vektor, engine target, negative prompts, variations
     └── types/
-        └── prompt.ts           # Shared TypeScript interfaces & cost types
+        ├── prompt.ts           # Shared TypeScript interfaces & cost types
+        └── errorLog.ts         # Tipe data log error sistem
 ```
 
 ---
@@ -124,6 +130,8 @@ export const prompts = sqliteTable('prompts', {
   batchId: text('batch_id'), // Group ID untuk multi-prompt / batch runs
   variationIndex: integer('variation_index').default(1), // Indeks variasi ke-N
   title: text('title').notNull(), // Ringkasan singkat prompt
+  adobeStockTitle: text('adobe_stock_title'), // Judul SEO Adobe Stock bahasa Inggris (maksimal 120 karakter)
+  keywords: text('keywords'), // JSON array string daftar keywords microstock (10-48 tags, max 2 kata per tag)
   rawIdea: text('raw_idea').notNull(), // Input mentah pengguna
   optimizedPrompt: text('optimized_prompt').notNull(), // Hasil prompt visual 2D lengkap
   negativePrompt: text('negative_prompt'), // Negative prompt pencegah foto & 3D
@@ -430,7 +438,57 @@ Untuk menjawab kebutuhan microstock dan produksi massal (seperti icon pack, stic
        - Tombol **[DOWNLOAD PNG]** untuk kartu tersebut.
        - Tombol **[GENERATE ULANG (+$0.020000)]** yang merender ulang varian tersebut secara mandiri.
 3. **Master Action: Download Semua PNG (Batch)**:
-   - Tombol unduh massal pada bilah atas untuk mengunduh seluruh file PNG 1:1 dari semua kartu secara berurutan ke komputer pengguna dalam satu kali klik.
+   - Tombol unduh massal pada bilah atas untuk mengunduh seluruh file PNG 1:1 dari semua kartu secara berurutan ke komputer pengguna dalam satu kali klik, lengkap dengan penyematan metadata SEO otomatis dan penamaan file SEO.
+
+### 6.8 Otomatisasi Metadata SEO Microstock & Injeksi Binary 3-Lapisan (Zero External Dependencies)
+Untuk memaksimalkan nilai jual dan penerimaan aset di seluruh platform microstock internasional (Adobe Stock, Shutterstock, Freepik, Getty Images, Vecteezy), sistem menerapkan aturan biner ketat tanpa dependensi pihak ketiga:
+
+#### 1. Aturan Zero External Dependencies (100% Native Pure JS / Node.js Buffer)
+- **Tanpa Library Eksternal**: Tidak menggunakan pustaka pihak ketiga seperti `exiftool`, `sharp`, `piexifjs`, atau `glob`.
+- **Parser & Serializer Biner Mandiri**: Seluruh *parser*, *serializer*, dan *injector* format biner (JPEG, PNG, TIFF/EXIF, IPTC IIM Photoshop 8BIM, Adobe XMP, dan tabel bitwise CRC32 `0xEDB88320`) dibangun manual dari nol menggunakan API native TypedArray (`Uint8Array`, `ArrayBuffer`, `DataView`) pada [imageMetadataInjector.ts](file:///d:/GPTIMAGEGENERATE/src/utils/imageMetadataInjector.ts).
+
+#### 2. Kesesuaian Standar Agensi Microstock (Sinkronisasi Serentak 3 Lapisan)
+Saat memasukkan judul (*Title*), kata kunci (*Keywords*), deskripsi (*Caption/Description*), dan pembuat (*Author*), metadata diselaraskan serentak ke **3 lapisan standar industri**:
+1. **Lapisan 1: IPTC IIM (Photoshop 8BIM Resource `0x0404`)**:
+   - Segmen APP13 Photoshop 8BIM (ID `0x0404` untuk IPTC-NAA).
+   - Deklarasi Charset UTF-8: Record 1 Dataset `0x5A` (Escape sequence `\x1b%G`).
+   - Dataset Record 2:
+     - `2:05` (Object Name / Title)
+     - `2:25` (Keywords - repeated dataset tag per keyword)
+     - `2:120` (Caption / Abstract / Description)
+     - `2:80` (By-line / Author / Creator)
+     - `2:105` (Headline), `2:110` (Credit), `2:115` (Source).
+2. **Lapisan 2: EXIF IFD0 (TIFF Header & Windows XP Tags UCS-2 / UTF-16LE)**:
+   - Tag standar ASCII: `ImageDescription` (`0x010E`), `Artist` (`0x013B`), `Software` (`0x0131`).
+   - Tag Windows XP Extended (format UCS-2 / UTF-16LE null-terminated):
+     - `XPTitle` (`0x9C9B`)
+     - `XPKeywords` (`0x9C9E` - format pemisah titik koma `tag1;tag2;tag3`)
+     - `XPComment` (`0x9C9C`)
+     - `XPAuthor` (`0x9C9D`)
+     - `XPSubject` (`0x9C9F`)
+   - Disematkan ke chunk PNG `eXIf` atau segmen JPEG APP1 `Exif\0\0`.
+3. **Lapisan 3: Adobe XMP Packet (Dublin Core RDF XML)**:
+   - Disematkan ke chunk PNG `iTXt` (`XML:com.adobe.xmp`) & segmen JPEG APP1 (`http://ns.adobe.com/xap/1.0/\0`).
+   - Memuat skema lengkap:
+     - `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">...`
+     - `<dc:description><rdf:Alt><rdf:li xml:lang="x-default">...`
+     - `<dc:creator><rdf:Seq><rdf:li>...`
+     - `<dc:subject><rdf:Bag><rdf:li>tag 1</rdf:li>...`
+     - `<photoshop:Headline>`, `<photoshop:Credit>`, `<photoshop:Source>`, `<xmp:CreatorTool>`.
+
+#### 3. Spesifikasi Konten Metadata Microstock
+- **Adobe Stock Title (SEO)**:
+  - Wajib dalam Bahasa Inggris (*English*), maksimal **120 karakter**.
+  - Dilengkapi *live character counter badge* di UI (`114/120 CHARS`).
+- **Keywords / Tags**:
+  - **10 hingga 48 kata kunci** relevan.
+  - Batasan ketat **maksimal 2 kata per tag** (misal: `"flat vector"`, `"fox mascot"`, bukan kalimat panjang).
+- **Penamaan File SEO Otomatis**:
+  - File yang diunduh otomatis dinamai sesuai judul SEO yang disanitasi (misal: `vintage_coffee_emblem_mascot_with_ribbon_banner_1x1.png`).
+
+#### 4. Profil Kontributor & Pembersihan Tag Anti-Reject
+- **Nama Author / Artist Mandiri**: Pengguna dapat menentukan nama author/brand sendiri via modal profil (tersimpan di `localStorage`) yang otomatis disematkan ke IPTC `By-line 2:80`, EXIF `Artist`/`XPAuthor`, dan XMP `dc:creator`.
+- **Pembersihan Kata "AI" & "Generator"**: Seluruh metadata binary diatur bebas dari kata "AI" atau "AI Generator". Tag default software disetel menjadi `"Adobe Illustrator"`, credit menjadi nama author, dan source menjadi `"Original Vector Artwork"` agar terhindar dari auto-reject oleh sistem filter agensi microstock.
 
 ---
 
@@ -936,3 +994,45 @@ Fitur ini menjamin bahwa setiap kali pengguna melakukan regenerasi prompt AI pad
 3. **Status Semi-Transparan (Dimmed)**:
    - Versi lama yang tidak aktif ditampilkan dengan `opacity-65 hover:opacity-100` dan garis batas putus-putus.
    - Dilengkapi tombol cepat **`[ ↺ Gunakan ]`** untuk beralih kembali ke versi tersebut dan tombol **`[ 📋 Salin ]`** per versi.
+
+---
+
+## 14. Arsitektur Diagnostic Error Logger, Recovery System & Performance Reliability
+
+Untuk memastikan seluruh kegagalan eksekusi render gambar atau API tercatat secara transparan dan mudah didiagnosis:
+
+### 14.1 Pencatatan Ganda (Disk Log & In-Memory Ring Buffer)
+1. **Pencatatan ke Disk Lokal (`server/services/error-logger.service.ts`)**:
+   - Setiap kali terjadi exception pada pembuatan gambar 1:1 (`openai/gpt-image-2.5-sunburst`), ekspansi prompt (`deepseek/deepseek-v4.1-flash`), atau kurs harian, backend otomatis mencatat entri ke:
+     ```text
+     data/logs/error_YYYY-MM-DD.log
+     ```
+   - Format log mencakup: Timestamp harian, HTTP Status Code, Tipe Operasi, Model AI, Pesan Error, Snippet Prompt, Response Body mentah, dan Stack Trace.
+2. **In-Memory Buffer (Maksimal 100 Entri)**:
+   - Server menyimpan 100 entri error terbaru di RAM untuk diakses secara instan oleh frontend tanpa overhead pembacaan disk berulang.
+3. **REST API Endpoints**:
+   - `GET /api/logs/errors`: Mengambil seluruh riwayat error sistem terbaru.
+   - `DELETE /api/logs/errors`: Membersihkan riwayat error di memori.
+
+### 14.2 Fastify Server BodyLimit & Proteksi Payload Besar
+- **Masalah**: Gambar 1024x1024 berformat PNG Base64 berukuran sekitar **1.1 MB – 1.5 MB**. Batas default Fastify adalah 1MB (`1,048,576 bytes`), yang dapat memicu `FST_ERR_CTP_BODY_TOO_LARGE` atau pemutusan koneksi sepihak.
+- **Solusi**: Server Fastify dikonfigurasi dengan:
+  ```typescript
+  const server = Fastify({
+    logger: true,
+    bodyLimit: 50 * 1024 * 1024, // 50 MB
+  });
+  ```
+- **Pengiriman Berbasis URL File Lokal**: Backend langsung menulis buffer gambar ke `data/outputs/YYYY-MM-DD/img_xxx.png` dan mengirimkan URL relatif `/${relativePath}` ke browser. Hal ini mencegah browser menyimpan string Base64 raksasa dan menghindari error kuota penyimpanan `localStorage` (`QuotaExceededError`).
+
+### 14.3 Kalibrasi Durasi Progress Bar (`CardLoadingBar.tsx`)
+- **Fase Prompt Expansion**: Estimasi `3500ms` (3.5 detik).
+- **Fase Render Gambar 1:1**: Estimasi `20000ms` (20 detik) per gambar agar pergerakan persentase 0–100% bergerak proporsional dan realistis terhadap waktu respon riil OpenRouter.
+
+### 14.4 UI Error Log Modal & Akses Cepat
+- **Navbar Indicator**: Tombol `[ ⚠️ Log Error ]` dengan badge merah aktif di header atas.
+- **Kartu & Banner Shortcut**: Tombol langsung `[ 📋 Lihat Detail Log Error ]` di banner notifikasi kegagalan render.
+- **Modal Interaktif (`src/components/ErrorLogModal.tsx`)**:
+  - Filter tab per kategori (*Semua*, *Gambar*, *Prompt AI*).
+  - Collapsible viewer untuk raw JSON payload dan stack trace.
+  - Tombol 1-klik untuk menyalin laporan error ke clipboard untuk kemudahan debugging.

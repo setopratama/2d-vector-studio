@@ -2,6 +2,7 @@
 import React from 'react';
 import { TargetEngine, InputMode } from '../types/prompt';
 import { STYLE_PRESETS, TARGET_ENGINES, SAMPLE_IDEAS } from '../data/presets';
+import { KeywordExpanderWidget } from './KeywordExpanderWidget';
 import { CheckSquare, Square, Layers, Terminal, Sparkles, ListPlus } from 'lucide-react';
 
 interface PromptInputProps {
@@ -18,6 +19,7 @@ interface PromptInputProps {
   isBlackAndWhite: boolean;
   setIsBlackAndWhite: (val: boolean) => void;
   tokenCount: number;
+  showConceptExpander?: boolean;
 }
 
 export const PromptInput: React.FC<PromptInputProps> = ({
@@ -34,6 +36,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   isBlackAndWhite,
   setIsBlackAndWhite,
   tokenCount,
+  showConceptExpander = true,
 }) => {
   // Multi-line concept count helper
   const lineConcepts = rawIdea
@@ -41,6 +44,20 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
   const activeCount = inputMode === 'multi-keyword' ? Math.max(1, lineConcepts.length) : batchCount;
+
+  const handleApplySingleConcept = (concept: string) => {
+    setRawIdea(concept);
+  };
+
+  const handleAppendMultipleConcepts = (concepts: string[]) => {
+    if (inputMode === 'multi-keyword') {
+      const existing = rawIdea.trim();
+      const newLines = concepts.join('\n');
+      setRawIdea(existing ? `${existing}\n${newLines}` : newLines);
+    } else {
+      setRawIdea(concepts[0]);
+    }
+  };
 
   return (
     <div className="bg-white border border-stone-200 shadow-sm p-5 sm:p-6 space-y-5">
@@ -83,7 +100,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       </div>
 
       {/* Main Textarea */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-600">
             {inputMode === 'variations'
@@ -117,7 +134,17 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           )}
         </div>
 
-        {/* Quick Sample Tags */}
+        {/* AI Concept Expander Widget (1-2 Words -> 4 Natural Subject Concepts 3-4 Words) */}
+        {showConceptExpander && (
+          <KeywordExpanderWidget
+            currentRawIdea={rawIdea}
+            onApplySingleConcept={handleApplySingleConcept}
+            onAppendMultipleConcepts={handleAppendMultipleConcepts}
+            inputMode={inputMode}
+          />
+        )}
+
+        {/* Quick Sample Tags (Original samples remain 100% intact) */}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <span className="text-[10px] uppercase font-mono text-stone-400">Contoh Cepat:</span>
           {inputMode === 'variations' ? (
@@ -126,7 +153,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
                 key={idea}
                 type="button"
                 onClick={() => setRawIdea(idea)}
-                className="text-[10px] font-mono px-2 py-0.5 border border-stone-200 bg-stone-50 text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                className="text-[10px] font-mono px-2 py-0.5 border border-stone-200 bg-stone-50 text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors cursor-pointer"
               >
                 + {idea}
               </button>
@@ -139,7 +166,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
                   'maskot rubah mekanik\nserigala cyberpunk neon\nburung hantu steampunk\nberuang robot armor'
                 )
               }
-              className="text-[10px] font-mono px-2 py-0.5 border border-stone-300 bg-stone-100 text-stone-800 hover:border-stone-900 transition-colors"
+              className="text-[10px] font-mono px-2 py-0.5 border border-stone-300 bg-stone-100 text-stone-800 hover:border-stone-900 transition-colors cursor-pointer"
             >
               + Contoh 4 Konsep (Animal Cyberpunk Pack)
             </button>

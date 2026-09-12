@@ -14,6 +14,10 @@ export const prompts = sqliteTable('prompts', {
   vectorStyle: text('vector_style'),
   isBlackAndWhite: integer('is_black_and_white', { mode: 'boolean' }).notNull().default(false),
   
+  // Adobe Stock SEO Metadata
+  adobeStockTitle: text('adobe_stock_title'), // English SEO Title <= 120 chars
+  keywords: text('keywords'), // JSON array string or comma separated keywords (10-48 tags)
+  
   // Multi-Version Prompt Timeline
   promptVersionsData: text('prompt_versions_data'), // JSON string of PromptVersion[]
   activePromptVersionIndex: integer('active_prompt_version_index').default(0),

@@ -41,17 +41,17 @@ export const ImageResultCard: React.FC<ImageResultCardProps> = ({
     }, 2000);
   };
 
-  const handleDownloadSingle = (item: PromptItem, img: GeneratedImageVersion) => {
-    const downloadUrl = img.dataUrl || `/${img.imagePath}`;
-    const safeTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 25);
-    const fileName = `${safeTitle}_v${img.version}_1x1.png`;
+  const handleDownloadSingle = async (item: PromptItem, img: GeneratedImageVersion) => {
+    const downloadUrl = img.dataUrl || (img.imagePath ? (img.imagePath.startsWith('/') ? img.imagePath : `/${img.imagePath}`) : '');
+    const { sanitizeSeoFileName } = await import('../utils/imageMetadataInjector');
+    const fileName = sanitizeSeoFileName(item.adobeStockTitle || item.title);
 
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const { downloadSingleImage } = await import('../utils/downloadHelper');
+    await downloadSingleImage(downloadUrl, fileName, {
+      title: item.adobeStockTitle || item.title,
+      keywords: item.keywords || [],
+      description: item.optimizedPrompt,
+    });
   };
 
   const imageTariffUsd = PRICING_CONFIG.IMAGE_FLAT_COST_PER_UNIT_USD;

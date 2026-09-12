@@ -8,6 +8,7 @@ import fs from 'node:fs';
 
 const server = Fastify({
   logger: true,
+  bodyLimit: 50 * 1024 * 1024, // 50MB body limit for image payloads
 });
 
 async function main() {

@@ -5,10 +5,15 @@ import { UnifiedVariationCard } from './UnifiedVariationCard';
 import { Sparkles, Download, Image as ImageIcon, Database, Layers, Hourglass, XCircle } from 'lucide-react';
 import { formatUsd, formatIdr, PRICING_CONFIG } from '../utils/costCalculator';
 import { QueueTask } from '../hooks/usePromptGenerator';
+import { CardLoadingBar } from './CardLoadingBar';
+
+import { ContributorProfile } from '../hooks/useContributorProfile';
 
 interface BatchCardsGridProps {
   promptItems: PromptItem[];
   taskQueue: QueueTask[];
+  contributorProfile?: ContributorProfile;
+  onOpenProfileSettings?: () => void;
   getCardQueueStatus: (promptId: string) => {
     isProcessing: boolean;
     isQueued: boolean;
@@ -29,6 +34,8 @@ interface BatchCardsGridProps {
 export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
   promptItems,
   taskQueue,
+  contributorProfile,
+  onOpenProfileSettings,
   getCardQueueStatus,
   onGenerateImageForPrompt,
   onGenerateAllBatchImages,
@@ -62,76 +69,87 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
       {/* ==================================================================== */}
       {/* BATCH MASTER HEADER                                                  */}
       {/* ==================================================================== */}
-      <div className="bg-white border-2 border-stone-900 shadow-sm p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-stone-900 inline-block"></span>
-            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-stone-900">
-              Hasil Optimasi Prompt 2D ({totalCards} Variasi Desain Mandiri)
-            </h2>
-          </div>
-          <div className="flex items-center gap-2 mt-1 font-mono text-[11px] text-stone-600 flex-wrap">
-            <span className="flex items-center gap-1 text-emerald-800 font-bold">
-              <Database className="w-3 h-3 text-emerald-600" />
-              <span>{totalCards} Card Tersimpan di SQLite DB</span>
-            </span>
-            <span>•</span>
-            <span>
-              Total Biaya Batch: <strong className="text-stone-900">{formatUsd(totalBatchSpendUsd, 6)}</strong> (~{formatIdr(totalBatchSpendUsd * 16000)})
-            </span>
+      <div className="bg-white border-2 border-stone-900 shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-stone-900 inline-block"></span>
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-stone-900">
+                Hasil Optimasi Prompt 2D ({totalCards} Variasi Desain Mandiri)
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 mt-1 font-mono text-[11px] text-stone-600 flex-wrap">
+              <span className="flex items-center gap-1 text-emerald-800 font-bold">
+                <Database className="w-3 h-3 text-emerald-600" />
+                <span>{totalCards} Card Tersimpan di SQLite DB</span>
+              </span>
+              <span>•</span>
+              <span>
+                Total Biaya Batch: <strong className="text-stone-900">{formatUsd(totalBatchSpendUsd, 6)}</strong> (~{formatIdr(totalBatchSpendUsd * 16000)})
+              </span>
 
-            {/* Live Queue Indicator */}
+              {/* Live Queue Indicator */}
+              {isQueueActive && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-900 px-2 py-0.5 font-bold border border-indigo-300 animate-pulse">
+                    <Hourglass className="w-3 h-3 text-indigo-700 animate-spin" />
+                    <span>{taskQueue.length} Antrean AI Menunggu</span>
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Master Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Cancel all queue button if queue active */}
             {isQueueActive && (
-              <>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-900 px-2 py-0.5 font-bold border border-indigo-300 animate-pulse">
-                  <Hourglass className="w-3 h-3 text-indigo-700 animate-spin" />
-                  <span>{taskQueue.length} Antrean AI Menunggu</span>
+              <button
+                onClick={onCancelAllQueueTasks}
+                className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-500 font-mono text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Batalkan seluruh antrean yang sedang menunggu"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>BATALKAN SEMUA ANTREAN ({taskQueue.length})</span>
+              </button>
+            )}
+
+            {/* Action 1: Generate All Images if any ungenerated */}
+            {ungeneratedCount > 0 && (
+              <button
+                onClick={onGenerateAllBatchImages}
+                title="Masukkan semua kartu yang belum digenerate ke dalam antrean AI"
+                className="py-2 px-4 text-xs font-mono uppercase font-bold tracking-wider transition-all flex items-center gap-2 bg-stone-900 text-white hover:bg-stone-800 border-2 border-stone-900 active:translate-y-[1px] cursor-pointer"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>
+                  GENERATE SEMUA {totalCards} GAMBAR (+{formatUsd(totalBatchImagesCostUsd, 4)} / ~{formatIdr(totalBatchImagesCostIdr)})
                 </span>
-              </>
+              </button>
+            )}
+
+            {/* Action 2: Download All PNGs (if images exist) */}
+            {itemsWithImages.length > 0 && (
+              <button
+                onClick={onDownloadAllImages}
+                className="py-2 px-3.5 bg-white hover:bg-stone-100 text-stone-900 border-2 border-stone-900 font-mono text-xs uppercase font-bold tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>DOWNLOAD SEMUA PNG ({itemsWithImages.length} GAMBAR)</span>
+              </button>
             )}
           </div>
         </div>
 
-        {/* Master Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Cancel all queue button if queue active */}
-          {isQueueActive && (
-            <button
-              onClick={onCancelAllQueueTasks}
-              className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-500 font-mono text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-              title="Batalkan seluruh antrean yang sedang menunggu"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              <span>BATALKAN SEMUA ANTREAN ({taskQueue.length})</span>
-            </button>
-          )}
-
-          {/* Action 1: Generate All Images if any ungenerated */}
-          {ungeneratedCount > 0 && (
-            <button
-              onClick={onGenerateAllBatchImages}
-              title="Masukkan semua kartu yang belum digenerate ke dalam antrean AI"
-              className="py-2 px-4 text-xs font-mono uppercase font-bold tracking-wider transition-all flex items-center gap-2 bg-stone-900 text-white hover:bg-stone-800 border-2 border-stone-900 active:translate-y-[1px] cursor-pointer"
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>
-                GENERATE SEMUA {totalCards} GAMBAR (+{formatUsd(totalBatchImagesCostUsd, 4)} / ~{formatIdr(totalBatchImagesCostIdr)})
-              </span>
-            </button>
-          )}
-
-          {/* Action 2: Download All PNGs (if images exist) */}
-          {itemsWithImages.length > 0 && (
-            <button
-              onClick={onDownloadAllImages}
-              className="py-2 px-3.5 bg-white hover:bg-stone-100 text-stone-900 border-2 border-stone-900 font-mono text-xs uppercase font-bold tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>DOWNLOAD SEMUA PNG ({itemsWithImages.length} GAMBAR)</span>
-            </button>
-          )}
-        </div>
+        {/* Progress Loading Bar Kecil di Bawah Master Batch Header */}
+        <CardLoadingBar
+          isLoading={isQueueActive}
+          label={`MEMPROSES ANTREAN BATCH AI (${taskQueue.length} TUGAS MENUNGGU)...`}
+          completedLabel="SEMUA TUGAS BATCH SELESAI!"
+          estimatedDurationMs={20000 * Math.max(1, taskQueue.length)}
+          colorScheme="indigo"
+        />
       </div>
 
       {/* ==================================================================== */}
@@ -143,6 +161,8 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
             key={item.id}
             item={item}
             index={idx}
+            contributorProfile={contributorProfile}
+            onOpenProfileSettings={onOpenProfileSettings}
             onGenerateImage={onGenerateImageForPrompt}
             onRegenerateImage={onRegenerateImage}
             onRegeneratePrompt={onRegeneratePrompt}

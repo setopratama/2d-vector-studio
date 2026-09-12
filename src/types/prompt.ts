@@ -26,6 +26,8 @@ export interface PromptVersion {
   optimizedPrompt: string;   // Teks prompt visual 2D
   negativePrompt?: string;   // Negative prompt
   vectorStyle?: string;      // Gaya vektor
+  adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
+  keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
   inputTokens: number;       // Token input
   outputTokens: number;      // Token output
   promptCostUsd: string;     // Biaya prompt versi ini
@@ -41,6 +43,8 @@ export interface PromptItem {
   negativePrompt?: string;
   vectorStyle?: string;
   colorPalette?: string;
+  adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
+  keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
   targetEngine: TargetEngine;
   aspectRatio: string; // '1:1'
   stylePreset: string;

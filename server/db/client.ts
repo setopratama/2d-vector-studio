@@ -16,7 +16,7 @@ const sqlite = new Database(dbPath);
 // Enable WAL mode for high performance
 sqlite.pragma('journal_mode = WAL');
 
-// Ensure table exists
+// Ensure tables exist
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS prompts (
     id TEXT PRIMARY KEY,
@@ -31,6 +31,8 @@ sqlite.exec(`
     style_preset TEXT,
     vector_style TEXT,
     is_black_and_white INTEGER NOT NULL DEFAULT 0,
+    prompt_versions_data TEXT,
+    active_prompt_version_index INTEGER DEFAULT 0,
     image_path TEXT,
     all_image_paths TEXT,
     images_data TEXT,
@@ -56,5 +58,19 @@ sqlite.exec(`
   );
 `);
 
+// Auto-migration helper: Add missing columns if database was created with an older schema
+try {
+  const existingCols = (sqlite.pragma('table_info(prompts)') as Array<{ name: string }>).map((c) => c.name);
+  if (!existingCols.includes('prompt_versions_data')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN prompt_versions_data TEXT;');
+  }
+  if (!existingCols.includes('active_prompt_version_index')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN active_prompt_version_index INTEGER DEFAULT 0;');
+  }
+} catch (migErr) {
+  console.warn('[DB AutoMigration] Migration check warning:', migErr);
+}
+
 export const db = drizzle(sqlite, { schema });
 export { sqlite };
+

@@ -26,10 +26,14 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 
+import { ContributorProfile } from '../hooks/useContributorProfile';
+import { sanitizeSeoFileName } from '../utils/pngMetadataHelper';
+
 interface AutoRunnerWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
   usdToIdrRate?: number;
+  contributorProfile?: ContributorProfile;
   onItemsGenerated?: (items: PromptItem[]) => void;
 }
 
@@ -37,6 +41,7 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
   isOpen,
   onClose,
   usdToIdrRate = 16000,
+  contributorProfile,
   onItemsGenerated,
 }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -104,25 +109,50 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
     onClose();
   };
 
-  const handleDownloadAll = () => {
+  const handleDownloadAll = async () => {
     const itemsWithImages = generatedItems.filter((p) => p.images.length > 0);
     if (itemsWithImages.length === 0) return;
 
-    itemsWithImages.forEach((item, index) => {
+    const downloadList = itemsWithImages.map((item) => {
       const activeImg = item.images[item.images.length - 1];
-      if (!activeImg || !activeImg.dataUrl) return;
+      const seoTitle = item.adobeStockTitle || item.title;
+      const fileName = sanitizeSeoFileName(seoTitle);
+      const url = activeImg.dataUrl || (activeImg.imagePath ? (activeImg.imagePath.startsWith('/') ? activeImg.imagePath : `/${activeImg.imagePath}`) : '');
+      return {
+        url,
+        fileName,
+        metadata: {
+          title: seoTitle,
+          keywords: item.keywords || [],
+          description: item.optimizedPrompt,
+          author: contributorProfile?.authorName || 'Vector Artist',
+          software: contributorProfile?.softwareName || 'Adobe Illustrator',
+          credit: contributorProfile?.credit,
+          source: contributorProfile?.source,
+        },
+      };
+    }).filter((d) => Boolean(d.url));
 
-      setTimeout(() => {
-        const safeTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 25);
-        const fileName = `${safeTitle}_v${activeImg.version}_1x1.png`;
+    const { downloadMultipleImagesSequentially } = await import('../utils/downloadHelper');
+    await downloadMultipleImagesSequentially(downloadList, 400);
+  };
 
-        const link = document.createElement('a');
-        link.href = activeImg.dataUrl!;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, index * 200);
+  const handleDownloadSingleItem = async (item: PromptItem) => {
+    const activeImg = item.images[0];
+    if (!activeImg) return;
+    const seoTitle = item.adobeStockTitle || item.title;
+    const fileName = sanitizeSeoFileName(seoTitle);
+    const url = activeImg.dataUrl || (activeImg.imagePath ? (activeImg.imagePath.startsWith('/') ? activeImg.imagePath : `/${activeImg.imagePath}`) : '');
+
+    const { downloadSingleImage } = await import('../utils/downloadHelper');
+    await downloadSingleImage(url, fileName, {
+      title: seoTitle,
+      keywords: item.keywords || [],
+      description: item.optimizedPrompt,
+      author: contributorProfile?.authorName || 'Vector Artist',
+      software: contributorProfile?.softwareName || 'Adobe Illustrator',
+      credit: contributorProfile?.credit,
+      source: contributorProfile?.source,
     });
   };
 
@@ -646,49 +676,71 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-1 border border-stone-200 bg-stone-50">
                     {generatedItems.map((item) => {
                       const img = item.images[0];
+                      const seoTitle = item.adobeStockTitle || item.title;
+                      const keywordCount = item.keywords?.length || 0;
                       return (
                         <div
                           key={item.id}
-                          className="bg-white border border-stone-200 p-2 space-y-1.5 shadow-2xs group relative"
+                          className="bg-white border border-stone-200 p-2 space-y-1.5 shadow-2xs group relative flex flex-col justify-between"
                         >
-                          {/* Image Box */}
-                          <div className="aspect-square bg-white border border-stone-100 flex items-center justify-center overflow-hidden">
-                            {img?.dataUrl ? (
-                              <img
-                                src={img.dataUrl}
-                                alt={item.title}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <ImageIcon className="w-6 h-6 text-stone-300" />
-                            )}
+                          <div className="space-y-1.5">
+                            {/* Image Box */}
+                            <div className="aspect-square bg-stone-50 border border-stone-100 flex items-center justify-center overflow-hidden relative">
+                              {img?.dataUrl ? (
+                                <img
+                                  src={img.dataUrl}
+                                  alt={seoTitle}
+                                  className="w-full h-full object-contain"
+                                />
+                              ) : (
+                                <ImageIcon className="w-6 h-6 text-stone-300" />
+                              )}
+                              {keywordCount > 0 && (
+                                <span className="absolute bottom-1 right-1 bg-stone-900/80 text-white text-[8px] font-mono px-1 py-0.2 rounded-xs">
+                                  {keywordCount} tags
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title & Style */}
+                            <div className="text-[10px] leading-tight font-bold text-stone-800 line-clamp-2" title={seoTitle}>
+                              {seoTitle}
+                            </div>
+                            <div className="text-[9px] text-stone-400 truncate">
+                              {item.vectorStyle}
+                            </div>
                           </div>
 
-                          {/* Title & Style */}
-                          <div className="text-[10px] leading-tight font-bold text-stone-800 truncate">
-                            {item.title}
-                          </div>
-                          <div className="text-[9px] text-stone-400 truncate">
-                            {item.vectorStyle}
-                          </div>
+                          {/* Actions: Download with Metadata & Copy Prompt */}
+                          <div className="grid grid-cols-2 gap-1 pt-1 border-t border-stone-100">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadSingleItem(item)}
+                              title="Download PNG dengan metadata IPTC/EXIF/XMP"
+                              className="text-[9px] py-1 px-1 border border-stone-200 hover:border-stone-900 bg-stone-50 hover:bg-stone-100 text-stone-700 flex items-center justify-center gap-0.5 transition-colors cursor-pointer"
+                            >
+                              <Download className="w-2.5 h-2.5" />
+                              <span>PNG</span>
+                            </button>
 
-                          {/* Quick Copy Button */}
-                          <button
-                            onClick={() => copyPromptText(item.id, item.optimizedPrompt)}
-                            className="w-full text-[9px] py-1 border border-stone-200 hover:border-stone-900 bg-stone-50 text-stone-700 flex items-center justify-center gap-1 transition-colors"
-                          >
-                            {copiedId === item.id ? (
-                              <>
-                                <Check className="w-2.5 h-2.5 text-emerald-600" />
-                                <span className="text-emerald-700">Tersalin</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-2.5 h-2.5" />
-                                <span>Salin Prompt</span>
-                              </>
-                            )}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => copyPromptText(item.id, item.optimizedPrompt)}
+                              className="text-[9px] py-1 px-1 border border-stone-200 hover:border-stone-900 bg-stone-50 hover:bg-stone-100 text-stone-700 flex items-center justify-center gap-0.5 transition-colors cursor-pointer"
+                            >
+                              {copiedId === item.id ? (
+                                <>
+                                  <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                  <span className="text-emerald-700">OK</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-2.5 h-2.5" />
+                                  <span>Prompt</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
