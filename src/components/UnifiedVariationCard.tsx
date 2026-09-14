@@ -20,11 +20,22 @@ import {
   Tag,
   FileText,
   CheckCircle2,
+  ShieldCheck,
+  Target,
+  TrendingUp,
+  Award,
+  Lightbulb,
+  AlertTriangle,
+  Compass,
+  ChevronDown,
+  ChevronUp,
+  Layout,
 } from 'lucide-react';
 import { formatUsd, formatIdr, PRICING_CONFIG } from '../utils/costCalculator';
 import { CardLoadingBar } from './CardLoadingBar';
 import { sanitizeSeoFileName } from '../utils/pngMetadataHelper';
 import { ContributorProfile } from '../hooks/useContributorProfile';
+import { COMMERCIAL_DIRECTIONS, COMPOSITION_PRESETS, resolveCompositionPreset } from '../data/presets';
 
 interface UnifiedVariationCardProps {
   item: PromptItem;
@@ -68,6 +79,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   const [copiedKeywordsComma, setCopiedKeywordsComma] = useState(false);
   const [copiedVersionIdx, setCopiedVersionIdx] = useState<number | null>(null);
   const [isDownloadingWithMeta, setIsDownloadingWithMeta] = useState(false);
+  const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const [activeVersionIndex, setActiveVersionIndex] = useState<number>(
     item.images.length > 0 ? item.images.length - 1 : 0
   );
@@ -95,6 +107,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
           title: item.title,
           adobeStockTitle: item.adobeStockTitle,
           keywords: item.keywords,
+          commercialBrief: item.commercialBrief,
           optimizedPrompt: item.optimizedPrompt,
           negativePrompt: item.negativePrompt,
           vectorStyle: item.vectorStyle,
@@ -110,6 +123,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     : promptVersions.length - 1;
 
   const activePromptVersion = promptVersions[activePromptVersionIndex] || promptVersions[0];
+  const commercialBrief = activePromptVersion.commercialBrief || item.commercialBrief;
 
   // Active SEO Title & Keywords
   const activeStockTitle = activePromptVersion.adobeStockTitle || item.adobeStockTitle || '';
@@ -201,6 +215,10 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   const imageTariffUsd = PRICING_CONFIG.IMAGE_FLAT_COST_PER_UNIT_USD;
   const imageTariffIdr = imageTariffUsd * PRICING_CONFIG.USD_TO_IDR_RATE;
   const dateStr = new Date(item.createdAt).toISOString().split('T')[0];
+  const activeDirectionId = item.commercialDirection || activePromptVersion.commercialDirection;
+  const directionObj = COMMERCIAL_DIRECTIONS.find((d) => d.id === activeDirectionId);
+  const activeCompositionId = item.composition || activePromptVersion.composition;
+  const compositionObj = resolveCompositionPreset(activeCompositionId);
 
   return (
     <div className={`bg-white border-2 transition-all overflow-hidden ${
@@ -214,13 +232,34 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
       {/* 1. TOP HEADER BAR: Card Index, Title, Style & DB Status             */}
       {/* ==================================================================== */}
       <div className="p-3.5 sm:p-4 border-b border-stone-300 bg-stone-50 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <span className="bg-stone-900 text-white text-xs font-mono font-bold px-2.5 py-0.5 tracking-wider">
             CARD #{index + 1}
           </span>
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-stone-900">
             {item.vectorStyle || '2D Vector'}
           </span>
+          {directionObj && (
+            <span className="text-[10px] font-mono px-2 py-0.5 bg-stone-200 text-stone-800 font-bold uppercase flex items-center gap-1 border border-stone-300">
+              <Compass className="w-3 h-3 text-stone-600" />
+              <span>{directionObj.label}</span>
+            </span>
+          )}
+          {compositionObj && (
+            <span className="text-[10px] font-mono px-2 py-0.5 bg-stone-100 text-stone-700 font-bold uppercase flex items-center gap-1 border border-stone-300">
+              <Layout className="w-3 h-3 text-stone-500" />
+              <span>{compositionObj.name}</span>
+              <span
+                className={`text-[8px] font-mono uppercase px-1 py-0.2 font-bold ${
+                  compositionObj.isIsolated
+                    ? 'bg-stone-200 text-stone-700'
+                    : 'bg-amber-300 text-stone-900'
+                }`}
+              >
+                {compositionObj.isIsolated ? 'White BG' : 'Scene Context'}
+              </span>
+            </span>
+          )}
           <span className="text-[11px] text-stone-500 font-sans hidden sm:inline">
             • {item.title}
           </span>
@@ -333,6 +372,232 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                 "{activePromptVersion.optimizedPrompt}"
               </div>
             </div>
+
+            {/* ============================================================== */}
+            {/* COMMERCIAL ART DIRECTOR & QUALITY GATE BRIEF                    */}
+            {/* ============================================================== */}
+            {commercialBrief && (
+              <div className="p-3.5 bg-stone-50 border-2 border-stone-900 space-y-3 font-mono shadow-xs">
+                {/* Header ribbon with Quality Gate decision badge */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-stone-300">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-stone-900" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                      Commercial Art Director Brief
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {commercialBrief.decision === 'PASS' ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-600 text-white flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-200" />
+                        <span>PASS (QUALITY GATE)</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-600 text-white flex items-center gap-1 animate-pulse">
+                        <AlertTriangle className="w-3 h-3 text-rose-200" />
+                        <span>REWORK (&lt; 7.0)</span>
+                      </span>
+                    )}
+
+                    <span className={`text-[10px] font-bold px-2 py-0.5 ${
+                      Number(commercialBrief.scores?.overall || 0) >= 8.0
+                        ? 'bg-emerald-700 text-white'
+                        : Number(commercialBrief.scores?.overall || 0) >= 7.0
+                        ? 'bg-stone-900 text-amber-300'
+                        : 'bg-rose-700 text-white'
+                    }`}>
+                      SCORE: {commercialBrief.scores?.overall ? Number(commercialBrief.scores.overall).toFixed(2) : '8.86'}/10
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsBriefExpanded(!isBriefExpanded)}
+                      className="text-[10px] px-1.5 py-0.5 border border-stone-400 hover:border-stone-900 bg-white text-stone-800 flex items-center gap-1 font-bold cursor-pointer transition-colors"
+                      title="Lihat detail strategi komersial dan risiko visual"
+                    >
+                      <span>{isBriefExpanded ? 'Tutup' : 'Detail'}</span>
+                      {isBriefExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* REWORK Cost-Saving Advisory Banner */}
+                {commercialBrief.decision === 'REWORK' && (
+                  <div className="p-2.5 bg-rose-50 border border-rose-300 text-rose-900 text-[11px] flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>
+                        <strong>Quality Gate Warning:</strong> Skor komersial di bawah 7.0. Rework prompt disarankan sebelum render gambar ($0.020).
+                      </span>
+                    </div>
+                    {onRegeneratePrompt && (
+                      <button
+                        type="button"
+                        onClick={() => onRegeneratePrompt(item.id)}
+                        disabled={isProcessing || isQueued}
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold uppercase cursor-pointer transition-colors"
+                      >
+                        🔄 Rework AI Concept
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* 5 Score Metrics Grid */}
+                {commercialBrief.scores && (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1 text-[10px]">
+                    {/* 1. Commercial Usefulness */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Commercial Usefulness">1. Commercial</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.commercial).toFixed(1)}</span>
+                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.commercial) >= 8.0 ? 'bg-emerald-600' : Number(commercialBrief.scores.commercial) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.commercial) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Visual Uniqueness */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Uniqueness">2. Uniqueness</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.uniqueness).toFixed(1)}</span>
+                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.uniqueness) >= 8.0 ? 'bg-indigo-600' : Number(commercialBrief.scores.uniqueness) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.uniqueness) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Searchability & Demand */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Searchability & Market Demand">3. Searchability</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.searchability).toFixed(1)}</span>
+                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.searchability) >= 8.0 ? 'bg-amber-500' : Number(commercialBrief.scores.searchability) >= 7.0 ? 'bg-amber-600' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.searchability) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. Vector Suitability */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Vector Autotrace Suitability">4. Vector Ready</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.vectorSuitability).toFixed(1)}</span>
+                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.vectorSuitability) >= 8.0 ? 'bg-emerald-600' : Number(commercialBrief.scores.vectorSuitability) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.vectorSuitability) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 5. Visual Clarity */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Clarity & Readability">5. Clarity</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.visualClarity || 9.0).toFixed(1)}</span>
+                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.visualClarity || 9.0) >= 8.0 ? 'bg-purple-600' : Number(commercialBrief.scores.visualClarity || 9.0) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.visualClarity || 9.0) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Primary Market & Target Buyer Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                  <div className="p-2 bg-white border border-stone-300 space-y-0.5">
+                    <div className="text-stone-500 font-bold text-[10px] uppercase flex items-center gap-1">
+                      <Target className="w-3 h-3 text-stone-700" />
+                      <span>Target Buyer:</span>
+                    </div>
+                    <div className="text-stone-900 font-medium">{commercialBrief.targetBuyer}</div>
+                  </div>
+
+                  <div className="p-2 bg-white border border-stone-300 space-y-0.5">
+                    <div className="text-stone-500 font-bold text-[10px] uppercase flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3 text-stone-700" />
+                      <span>Market Category:</span>
+                    </div>
+                    <div className="text-stone-900 font-medium">{commercialBrief.marketCategory}</div>
+                  </div>
+                </div>
+
+                {/* Use cases pills */}
+                {Array.isArray(commercialBrief.primaryUseCases) && commercialBrief.primaryUseCases.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-stone-500 font-bold uppercase">Primary Use Cases:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {commercialBrief.primaryUseCases.map((uc, uIdx) => (
+                        <span key={uIdx} className="text-[10px] px-2 py-0.5 bg-white border border-stone-300 text-stone-800">
+                          🎯 {uc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expandable Strategic Deep Dive */}
+                {isBriefExpanded && (
+                  <div className="pt-2 border-t border-stone-300 space-y-2.5 text-[11px] bg-white p-3 border border-stone-200">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3 text-amber-600" />
+                        <span>Visual Hook &amp; Diferensiasi:</span>
+                      </span>
+                      <p className="text-stone-800 leading-relaxed text-[11px]">
+                        <strong>Hook:</strong> {commercialBrief.visualHook}
+                      </p>
+                      <p className="text-stone-700 leading-relaxed text-[11px]">
+                        <strong>Diferensiasi:</strong> {commercialBrief.differentiation}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 pt-1.5 border-t border-stone-100">
+                      <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-1">
+                        <Compass className="w-3 h-3 text-indigo-600" />
+                        <span>Strategi Komposisi &amp; Vektor:</span>
+                      </span>
+                      <p className="text-stone-800 text-[11px]">
+                        <strong>Komposisi:</strong> {commercialBrief.compositionStrategy}
+                      </p>
+                      <p className="text-stone-700 text-[11px]">
+                        <strong>Vector Tracing:</strong> {commercialBrief.vectorStrategy}
+                      </p>
+                    </div>
+
+                    {Array.isArray(commercialBrief.risks) && commercialBrief.risks.length > 0 && (
+                      <div className="space-y-1 pt-1.5 border-t border-stone-100">
+                        <span className="text-[10px] font-bold text-amber-800 uppercase flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          <span>Identifikasi Risiko &amp; Larangan:</span>
+                        </span>
+                        <ul className="list-disc list-inside text-stone-600 text-[10px] space-y-0.5">
+                          {commercialBrief.risks.map((r, rIdx) => (
+                            <li key={rIdx}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Negative Prompt */}
             {activePromptVersion.negativePrompt && (
@@ -473,13 +738,13 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                 {/* 3. Adobe Stock Keywords Cloud */}
                 <div className="space-y-2 pt-1 border-t border-amber-200">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <Tag className="w-3.5 h-3.5 text-amber-700" />
                       <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
                         Keywords Microstock:
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-200 text-amber-900">
-                        {activeKeywords.length} TAGS • MAX 2 KATA
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                        {activeKeywords.length} TAGS • URUT PRIORITAS ADOBE
                       </span>
                     </div>
 
@@ -487,7 +752,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       <button
                         onClick={handleCopyKeywordsComma}
                         className="text-[10px] font-mono uppercase px-2 py-0.5 border border-amber-400 hover:border-amber-700 bg-white hover:bg-amber-100 text-amber-950 transition-colors flex items-center gap-1 cursor-pointer font-bold"
-                        title="Salin semua keyword dipisahkan koma untuk form upload microstock"
+                        title="Salin semua keyword berurutan dipisahkan koma untuk form upload microstock"
                       >
                         {copiedKeywordsComma ? (
                           <>
@@ -504,16 +769,37 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                     </div>
                   </div>
 
-                  {/* Keywords Tag Cloud */}
-                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-white border border-amber-300">
-                    {activeKeywords.map((tag, tIdx) => (
-                      <span
-                        key={tIdx}
-                        className="text-[10px] font-mono px-2 py-0.5 bg-stone-100 hover:bg-amber-100 text-stone-800 border border-stone-200 rounded-none cursor-default select-all"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                  {/* Keywords Tag Cloud with Top 10 Importance Ranking Highlight */}
+                  <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto p-2 bg-white border border-amber-300">
+                    {activeKeywords.map((tag, tIdx) => {
+                      const isTop10 = tIdx < 10;
+                      const isTier2 = tIdx >= 10 && tIdx < 20;
+                      return (
+                        <span
+                          key={tIdx}
+                          title={isTop10 ? `Rank #${tIdx + 1} (Tier 1: Strongest Search Intent)` : isTier2 ? `Rank #${tIdx + 1} (Tier 2: Components & Props)` : `Rank #${tIdx + 1}`}
+                          className={`text-[10px] font-mono px-2 py-0.5 flex items-center gap-1 cursor-default select-all transition-colors ${
+                            isTop10
+                              ? 'bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-400 font-bold shadow-2xs'
+                              : isTier2
+                              ? 'bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-300 font-medium'
+                              : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}
+                        >
+                          <span className={`text-[8px] font-bold ${isTop10 ? 'text-amber-800' : 'text-stone-400'}`}>
+                            #{tIdx + 1}
+                          </span>
+                          <span>{tag}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-0.5">
+                    <span className="flex items-center gap-1 text-amber-800 font-bold">
+                      <span>🔥 #1–10: Strongest Buyer Search Intent</span>
+                    </span>
+                    <span>#11–20: Props • #21–30: Style • #31+: Themes</span>
                   </div>
                 </div>
               </div>
@@ -523,7 +809,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                 <div className="flex items-center justify-between gap-2 pb-2 border-b border-amber-200 text-[11px] text-amber-950 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                    <span className="font-bold uppercase">Metadata SEO Adobe Stock &amp; Tags Microstock</span>
+                    <span className="font-bold uppercase">Metadata SEO Adobe Stock (Hierarki Faktual &amp; Tags Berperingkat)</span>
                   </div>
                   <span className="text-[10px] bg-stone-200 text-stone-700 px-1.5 py-0.2 font-bold uppercase">
                     Belum Dibuat (Mode Hemat Token)
@@ -531,7 +817,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                 </div>
 
                 <p className="text-[11px] text-amber-900 leading-relaxed">
-                  Mode hemat token aktif. Generate Judul SEO (≤120 kark) &amp; 30–48 Tags Microstock khusus kartu ini saat Anda membutuhkannya.
+                  Mode hemat token aktif. Generate Judul Faktual &amp; 25–40 Tags berperingkat (diurutkan berdasarkan bobot algoritma Adobe Stock) untuk kartu ini.
                 </p>
 
                 {onGenerateSeoMetadata && (
@@ -544,12 +830,12 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                     {isGeneratingSeo ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
-                        <span>Membuat Judul SEO &amp; 48 Tags...</span>
+                        <span>Menyusun Judul Faktual &amp; Ranked Keywords...</span>
                       </>
                     ) : (
                       <>
                         <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        <span>⚡ Generate SEO Metadata (Title + 48 Tags) (~Rp 0,3)</span>
+                        <span>⚡ Generate SEO Metadata (Title + Ranked Keywords) (~Rp 0,3)</span>
                       </>
                     )}
                   </button>

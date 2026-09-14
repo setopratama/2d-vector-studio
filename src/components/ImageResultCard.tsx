@@ -4,6 +4,8 @@ import { PromptItem, GeneratedImageVersion } from '../types/prompt';
 import { Download, RefreshCw, Copy, Check, Folder, Calendar, Star, Maximize2, Layers, Grid, LayoutList } from 'lucide-react';
 import { formatUsd, formatIdr, PRICING_CONFIG } from '../utils/costCalculator';
 import { useContributorProfile } from '../hooks/useContributorProfile';
+import { sanitizeSeoFileName } from '../utils/imageMetadataInjector';
+import { downloadSingleImage } from '../utils/downloadHelper';
 
 interface ImageResultCardProps {
   promptItems: PromptItem[];
@@ -46,10 +48,7 @@ export const ImageResultCard: React.FC<ImageResultCardProps> = ({
 
   const handleDownloadSingle = async (item: PromptItem, img: GeneratedImageVersion) => {
     const downloadUrl = img.dataUrl || (img.imagePath ? (img.imagePath.startsWith('/') ? img.imagePath : `/${img.imagePath}`) : '');
-    const { sanitizeSeoFileName } = await import('../utils/imageMetadataInjector');
     const fileName = sanitizeSeoFileName(item.adobeStockTitle || item.title);
-
-    const { downloadSingleImage } = await import('../utils/downloadHelper');
     const seoTitle = item.adobeStockTitle || item.title;
     await downloadSingleImage(downloadUrl, fileName, {
       title: seoTitle,

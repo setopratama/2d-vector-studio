@@ -12,11 +12,16 @@ export const prompts = sqliteTable('prompts', {
   aspectRatio: text('aspect_ratio').notNull().default('1:1'),
   stylePreset: text('style_preset'),
   vectorStyle: text('vector_style'),
+  commercialDirection: text('commercial_direction'),
+  composition: text('composition').default('single-isolated'),
   isBlackAndWhite: integer('is_black_and_white', { mode: 'boolean' }).notNull().default(false),
   
   // Adobe Stock SEO Metadata
   adobeStockTitle: text('adobe_stock_title'), // English SEO Title <= 120 chars
   keywords: text('keywords'), // JSON array string or comma separated keywords (10-48 tags)
+  
+  // Commercial Art Director & Quality Gate Brief
+  commercialBrief: text('commercial_brief'), // JSON string of CommercialBrief
   
   // Multi-Version Prompt Timeline
   promptVersionsData: text('prompt_versions_data'), // JSON string of PromptVersion[]

@@ -1,20 +1,39 @@
 # AGENTS.md
 
-Panduan teknis dan operasional untuk AI Agent & Pengembang dalam membangun dan mengembangkan aplikasi **Image Prompt Generator** otomatis berbasis Node.js, Vite + React, Local SQLite, dan Local Server.
+Panduan teknis dan operasional untuk AI Agent & Pengembang dalam membangun dan mengembangkan aplikasi **Commercial Art Director & Microstock Vector Studio** mandiri berbasis Node.js, Vite + React, Local SQLite, dan Local Server.
 
 ---
 
 ## 1. Ringkasan Proyek & Tujuan
 
-Aplikasi ini adalah **Agentic AI 2D Vector-Ready Studio** lokal mandiri dengan sistem **Pra-Estimasi Token & Biaya Terpisah** yang dirancang untuk:
-1. **Menerima ide konsep singkat / keyword** dari pengguna (misal: *"maskot rubah mekanik"*, *"vintage coffee badge"*).
-2. **Kalkulasi & Pra-Estimasi Biaya Transparan Sebelum Generate**:
-   - **Estimasi Tahap 1 (Prompt)**: Menghitung jumlah token input yang dikirim dan perkiraan token output yang diterima oleh LLM (`deepseek/deepseek-v4-flash-0731`), lengkap dengan estimasi harga dalam USD & IDR.
-   - **Estimasi Tahap 2 (Gambar 2D)**: Menghitung biaya pembuatan visual (`openai/gpt-image-2.5-sunburst`) per gambar 1:1.
-   - **Pemisahan Harga Nyata**: Biaya prompt dan biaya gambar **dipisah secara transparan** agar pengguna tidak bingung dan dapat memperkirakan pengeluaran sebelum menekan tombol generate.
-3. **Mengekspansi & Merekayasa Prompt (Agentic Prompt Engineering)** secara otomatis menjadi prompt visual **2D kelas tinggi yang terisolasi dan ramah vektor** (garis tegas, flat colors, tanpa noise fotografis).
-4. **Menghasilkan gambar 2D siap-vektor** berasio standar **1:1** dengan latar belakang bersih (solid/white background) atau mode **Hitam Putih (B&W)** sehingga **sangat mudah dikonversi/ditracing menjadi format Vektor (SVG, EPS, Illustrator)**.
-5. **Menyimpan riwayat lengkap ke SQLite lokal**: Termasuk teks prompt, path gambar per tanggal (`data/outputs/YYYY-MM-DD/`), rincian pemakaian token aktual (input/output), serta catatan biaya riil per tahap.
+Aplikasi ini adalah **Commercial Art Director & 2D Vector-Ready Studio** lokal mandiri dengan arsitektur **5-Tier Commercial Architecture**:
+```
+              IDEA (Core Subject)
+                │
+                ▼
+       COMMERCIAL DIRECTION  (Mengapa dibuat: 10 Pilar Pasar Microstock 2026)
+                │
+                ▼
+       COMMERCIAL CONCEPT    (Analisis Pasar, Target Buyer, & Visual Hook oleh Art Director)
+                │
+                ▼
+             STYLE           (Bagaimana terlihat: 7 Gaya Visual Siap Vektor 2D)
+                │
+                ▼
+          COMPOSITION        (Tata letak visual: Single Isolated, Grouped, Badge, dll)
+                │
+                ▼
+             PROMPT          (Sintesis prompt visual akhir 30–50 kata)
+```
+
+Bukan sekadar generator prompt biasa atau percakapan chain-of-thought bertele-tele, melainkan **Decision Engine** yang menghasilkan keputusan analisis terstruktur:
+1. **Commercial Direction (Pilar Pasar)**: Memilih pilar pasar 2026 (*Evergreen Utility, Business & Tech, Wellness, Sustainability, Education, Food & Beverage, Seasonal, Local & Cultural, Emotional, Playful/Surreal*).
+2. **Commercial Analysis & Brief**: Mengidentifikasi kategori pasar (*marketCategory*), target pembeli (*targetBuyer*), *primaryUseCases*, *visualHook*, *differentiation*, dan *searchIntent*.
+3. **Quality Gate & Scoring**: Evaluasi kelayakan komersial (skor *commercial*, *uniqueness*, *searchability*, *vectorSuitability*) dengan keputusan objektif `PASS` atau `REWORK`.
+4. **Style & Composition Independence**: Memisahkan secara tegas antara gaya visual (stroke & render) dengan strategi tata letak ruang (single isolated, grouped still life, circular badge, dll).
+5. **Visual Prompt Synthesis**: Menyintesis teks prompt 2D (30–50 kata) yang diturunkan langsung dari konsep komersial dan terisolasi pada latar belakang putih murni untuk autotrace SVG.
+6. **Kalkulasi & Pra-Estimasi Biaya Transparan Terpisah** (Token Prompt DeepSeek vs Render Gambar GPT Image 2.5).
+7. **Penyimpanan Permanen ke SQLite Lokal**: Menyimpan seluruh data teks, CommercialBrief, riwayat versi prompt, path gambar per tanggal, serta token & biaya riil.
 
 ---
 
@@ -65,7 +84,7 @@ GPTIMAGEGENERATE/
 │   ├── USER_GUIDE.md           # Panduan pengguna langkah demi langkah
 │   ├── ARCHITECTURE.md         # Arsitektur sistem, Fastify & SQLite
 │   ├── METADATA_SPECIFICATION.md # Spesifikasi biner IPTC/EXIF/XMP
-│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v1.3.1
+│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v2.0.0
 ├── package.json                # Dependencies gabungan & npm scripts
 ├── tsconfig.json               # Konfigurasi TypeScript
 ├── vite.config.ts              # Konfigurasi Vite (termasuk proxy API ke localhost:3001)

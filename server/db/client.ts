@@ -25,6 +25,7 @@ sqlite.exec(`
     title TEXT NOT NULL,
     adobe_stock_title TEXT,
     keywords TEXT,
+    commercial_brief TEXT,
     raw_idea TEXT NOT NULL,
     optimized_prompt TEXT NOT NULL,
     negative_prompt TEXT,
@@ -32,6 +33,8 @@ sqlite.exec(`
     aspect_ratio TEXT NOT NULL DEFAULT '1:1',
     style_preset TEXT,
     vector_style TEXT,
+    commercial_direction TEXT,
+    composition TEXT DEFAULT 'isolated-object',
     is_black_and_white INTEGER NOT NULL DEFAULT 0,
     prompt_versions_data TEXT,
     active_prompt_version_index INTEGER DEFAULT 0,
@@ -68,6 +71,15 @@ try {
   }
   if (!existingCols.includes('keywords')) {
     sqlite.exec('ALTER TABLE prompts ADD COLUMN keywords TEXT;');
+  }
+  if (!existingCols.includes('commercial_brief')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN commercial_brief TEXT;');
+  }
+  if (!existingCols.includes('commercial_direction')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN commercial_direction TEXT;');
+  }
+  if (!existingCols.includes('composition')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN composition TEXT DEFAULT \'isolated-object\';');
   }
   if (!existingCols.includes('prompt_versions_data')) {
     sqlite.exec('ALTER TABLE prompts ADD COLUMN prompt_versions_data TEXT;');

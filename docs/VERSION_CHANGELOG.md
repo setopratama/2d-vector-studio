@@ -1,6 +1,6 @@
 # Riwayat Versi & Catatan Rilis (Version Changelog)
 
-Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan petunjuk rollback Git untuk **Agentic AI 2D Vector Studio**.
+Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan petunjuk rollback Git untuk **Commercial Art Director & 2D Vector-Ready Studio**.
 
 ---
 
@@ -8,7 +8,8 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 | Versi Tag | Tanggal Rilis | Status | Sorotan Utama |
 |---|---|---|---|
-| **`v1.3.1`** | September 2026 | **Aktif (Latest)** | Gaya ke-7 **Premium Line Art Icon** (Mandat Zero-Color Fill & Coloring Book Printable), **On-Demand SEO Metadata Generator** per kartu, Sinkronisasi Title/Description biner. |
+| **`v2.0.0`** | September 2026 | **Aktif (Latest)** | **5-Tier Commercial Architecture** (*Idea → Direction → Concept → Style → Composition → Prompt*), **Commercial Score Quality Gate** (< 7.0 Rework / >= 7.0 Pass), **5 Komposisi Mandiri & Dynamic Isolation**, **Adobe Stock Official SEO Hierarchy & 4-Tier Ranked Keywords**, Auto SQLite DB Migration. |
+| **`v1.3.1`** | September 2026 | Stabil | Gaya ke-7 **Premium Line Art Icon** (Mandat Zero-Color Fill & Coloring Book Printable), **On-Demand SEO Metadata Generator** per kartu, Sinkronisasi Title/Description biner. |
 | **`v1.3.0`** | September 2026 | Stabil | AI Concept Expander (1–2 kata → 5 ide subjek 3–4 kata), Pembersihan nama file spasi alami tanpa underscore `_` & `1x1`, Modal Versi & Feature Switcher. |
 | **`v1.2.0`** | September 2026 | Stabil | Auto-Runner Wizard (batch sekuensial 1–50), Logging Error harian terpusat, Kurs USD/IDR dinamis via API. |
 | **`v1.1.0`** | September 2026 | Stabil | Judul SEO Adobe Stock (120 char), 10–48 Keywords microstock, Injektor metadata biner 3-layer murni (IPTC/EXIF/XMP), Profil Kontributor. |
@@ -18,7 +19,36 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 ## 🚀 Rincian Catatan Rilis per Versi
 
-### Versi 1.3.1 — *Premium Line Art Icon, On-Demand SEO Generator & Binary Metadata Precision* (Versi Aktif)
+### Versi 2.0.0 — *Commercial Art Director & 5-Tier Decision Engine Edition* (Versi Aktif)
+- **🏛️ 5-Tier Commercial Decision Architecture (`Idea → Direction → Concept → Style → Composition → Prompt`)**:
+  - Mengubah paradigma dari sekadar generator prompt teks biasa menjadi **Art Director Decision Engine** terstruktur.
+  - DeepSeek menganalisis konsep sebelum menyintesis visual prompt: *marketCategory*, *targetBuyer*, *primaryUseCases*, *commercialConcept*, *visualHook*, *differentiation*, dan *searchIntent*.
+  - Menghasilkan prompt visual 2D ringkas (30–50 kata) berorientasi autotrace vektor murni.
+- **🧭 10 Commercial Directions (Pilar Pasar Microstock 2026)**:
+  - Selector arah komersial di UI: *Evergreen Utility, Business & Technology, Wellness & Lifestyle, Sustainability, Education, Food & Beverage, Seasonal, Local & Cultural, Emotional / Human, Playful / Surreal*.
+  - AI mendapatkan konteks komersial mendalam sehingga hasil kreasi memiliki *commercial intent* yang jelas.
+- **⚖️ 5-Dimension Commercial Scoring & Cost-Saving Quality Gate**:
+  - Evaluasi kelayakan komersial otomatis dengan 5 metrik (skala 1–10): *Commercial Usefulness*, *Uniqueness*, *Searchability*, *Vector Suitability*, *Visual Clarity*, dan *Overall Score*.
+  - **Quality Gate Cost Protection**: Status kelayakan objektif (`PASS` jika skor >= 7.0, `REWORK` jika skor < 7.0).
+  - Pada pipeline batch auto-runner, konsep yang `REWORK` otomatis dilewati untuk mencegah pemborosan biaya render gambar GPT Image 2.5 ($0.020).
+- **📐 Pemisahan Independen Style vs Composition & Dynamic Isolation Mode**:
+  - Memisahkan secara tegas antara gaya visual (*Flat Vector, Mascot, Monoline, Sticker, Vintage Emblem, Stencil, Premium Line Art*) dan tata letak spasial.
+  - 5 Mode Komposisi: *Isolated Object, Object Group, Minimal Context, Commercial Scene, Decorative Composition*.
+  - Saklar isolasi dinamis: latar belakang putih murni terisolasi tidak lagi dipaksakan secara kaku bila mode *Commercial Scene* atau *Minimal Context* dipilih.
+- **🏷️ Adobe Stock Official SEO Hierarchy & 4-Tier Ranked Keywords**:
+  - **Title Hierarchy Faktual**: `[Commercial Concept] + [Primary Subject] + [Key Attributes / Use Case] + [Vector / Silhouette / Line Art / Style]` (maksimal 120 karakter, tanpa keyword stuffing).
+  - **4-Tier Ranked Keywords (10–48 tags)**:
+    - *Rank 1–10*: Strongest Search Intent (kata kunci pencarian utama pembeli).
+    - *Rank 11–20*: Subject & Core Context.
+    - *Rank 21–30*: Style & Primary Use Case.
+    - *Rank 31–48*: Secondary Relevance & Variations.
+  - On-Demand SEO Metadata Engine memanfaatkan seluruh data `commercialBrief` untuk menghasilkan metadata yang sangat relevan.
+- **🗄️ Auto SQLite DB Schema Migration**:
+  - Penambahan kolom `commercial_brief`, `commercial_direction`, dan `composition` pada tabel SQLite dengan fallback auto-migration runtime (`ALTER TABLE`) yang aman tanpa kehilangan data lama.
+
+---
+
+### Versi 1.3.1 — *Premium Line Art Icon, On-Demand SEO Generator & Binary Metadata Precision*
 - **🎨 Penambahan Preset Gaya ke-7: Premium Line Art Icon (`premium-line-art`)**:
   - Menyediakan preset gaya ke-7 yang dirancang khusus untuk icon vektor SVG minimalis, aset komersial microstock, stiker line art, dan buku mewarnai (*coloring page printable*).
   - **Mandat Mutlak Zero-Color Fill**: Otomatis meng-override mode warna menjadi uncolored line art pada backend prompt engine, mencegah kebocoran istilah warna (seperti *"vibrant flat solid green fill"*).
@@ -57,8 +87,8 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
   - Menghapus seluruh karakter underscore `_` dari nama file hasil unduhan maupun penyimpanan disk lokal.
   - Mengubah penamaan file unduhan menjadi format **spasi bersih alami (*natural spacing*)** yang rapi, mudah dibaca langsung di File Explorer/Finder, dan ramah SEO microstock tanpa double space, tanpa trailing/leading space, serta tanpa sisa teks `1:1` atau `1x1` (misal: `vintage coffee badge isolated on white background.png`).
 - **⚙️ Modal Versi & Saklar Mode UI (*Feature Switcher*)**:
-  - Menambahkan tombol badge versi `v1.3.0` di Navbar dan Footer.
-  - Pengguna dapat beralih antara **Mode Lengkap (v1.3.0)** dan **Mode Klasik Bersih (v1.0.0)** sesuai selera.
+  - Menambahkan tombol badge versi `v2.0.0` di Navbar dan Footer.
+  - Pengguna dapat beralih antara **Mode Lengkap (v2.0.0)** dan **Mode Klasik Bersih (v1.0.0)** sesuai selera.
 
 ---
 
@@ -106,8 +136,12 @@ git checkout v1.2.0
 # 3. Kembali ke Versi 1.3.0 (Smart Concept Expander & Granular Metadata)
 git checkout v1.3.0
 
-# 4. Kembali ke Versi Terkini (v1.3.1)
+# 4. Kembali ke Versi 1.3.1 (Premium Line Art Icon & On-Demand SEO)
+git checkout v1.3.1
+
+# 5. Kembali ke Versi Terkini (v2.0.0)
 git checkout main
 # atau
-git checkout v1.3.1
+git checkout v2.0.0
 ```
+

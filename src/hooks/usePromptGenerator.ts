@@ -4,6 +4,7 @@ import { PromptItem, TargetEngine, GeneratedImageVersion, InputMode } from '../t
 import { PRICING_CONFIG, estimateTextTokens, formatIdr } from '../utils/costCalculator';
 import { STYLE_PRESETS, PRESET_VARIATIONS, DEFAULT_NEGATIVE_PROMPT_BW, DEFAULT_NEGATIVE_PROMPT_COLOR } from '../data/presets';
 import { generate2DVectorSvgDataUrl, convertSvgToPngDataUrl } from '../utils/vectorGraphicGenerator';
+import { sanitizeSeoFileName } from '../utils/imageMetadataInjector';
 
 const STORAGE_KEY = 'gpt_vector_studio_history_v1';
 
@@ -401,8 +402,10 @@ export function usePromptGenerator() {
           rawIdea: target.rawIdea,
           targetEngine: target.targetEngine,
           stylePreset: target.stylePreset,
+          composition: target.composition,
           variationStyle: angle.style,
           variationIndex: target.variationIndex || 1,
+          commercialDirection: target.commercialDirection,
           isBlackAndWhite: target.isBlackAndWhite,
           includeMetadata: hasExistingSeo,
         }),
@@ -421,12 +424,17 @@ export function usePromptGenerator() {
           const newKeywords = Array.isArray(aiData.keywords) ? aiData.keywords : target.keywords;
           const newNegativePrompt = aiData.negativePrompt || target.negativePrompt;
           const newVectorStyle = aiData.vectorStyle || target.vectorStyle;
+          const newCommercialDirection = aiData.commercialDirection || target.commercialDirection;
+          const newComposition = aiData.composition || target.composition;
 
           const newVersionObj = {
             version: nextVersionNum,
             title: newTitle,
             adobeStockTitle: newAdobeStockTitle,
             keywords: newKeywords,
+            commercialDirection: newCommercialDirection,
+            composition: newComposition,
+            commercialBrief: aiData.commercialBrief || target.commercialBrief,
             optimizedPrompt: aiData.optimizedPrompt,
             negativePrompt: newNegativePrompt,
             vectorStyle: newVectorStyle,
@@ -448,6 +456,9 @@ export function usePromptGenerator() {
             title: newTitle,
             adobeStockTitle: newAdobeStockTitle,
             keywords: newKeywords,
+            commercialDirection: newCommercialDirection,
+            composition: newComposition,
+            commercialBrief: aiData.commercialBrief || target.commercialBrief,
             optimizedPrompt: aiData.optimizedPrompt,
             negativePrompt: newNegativePrompt,
             vectorStyle: newVectorStyle,
@@ -570,14 +581,18 @@ export function usePromptGenerator() {
 
   /**
    * Action: Enqueue all ungenerated cards into the FIFO queue worker
+   * @param onlyPass If true, only queues cards with Commercial Quality Gate PASS status (skips REWORK)
    */
-  const handleGenerateAllBatchImages = () => {
+  const handleGenerateAllBatchImages = (onlyPass: boolean = false) => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage('⚠️ Tidak ada koneksi internet. Tidak dapat memproses antrean batch.');
       return;
     }
 
-    const ungeneratedItems = activePrompts.filter((p) => p.images.length === 0);
+    let ungeneratedItems = activePrompts.filter((p) => p.images.length === 0);
+    if (onlyPass) {
+      ungeneratedItems = ungeneratedItems.filter((p) => p.commercialBrief?.decision !== 'REWORK');
+    }
     if (ungeneratedItems.length === 0) return;
 
     const newTasks: QueueTask[] = [];
@@ -613,6 +628,8 @@ export function usePromptGenerator() {
     batchCount,
     selectedEngine,
     selectedPreset,
+    commercialDirection = 'Evergreen Utility',
+    composition = 'single-isolated',
     isBlackAndWhite,
     includeMetadata = false,
   }: {
@@ -621,6 +638,8 @@ export function usePromptGenerator() {
     batchCount: number;
     selectedEngine: TargetEngine;
     selectedPreset: string;
+    commercialDirection?: string;
+    composition?: string;
     isBlackAndWhite: boolean;
     includeMetadata?: boolean;
   }) => {
@@ -670,6 +689,7 @@ export function usePromptGenerator() {
 
         let negativePrompt = isBlackAndWhite ? DEFAULT_NEGATIVE_PROMPT_BW : DEFAULT_NEGATIVE_PROMPT_COLOR;
         let vectorStyle = `${selectedPresetObj.name} - ${angle.style}`;
+        let promptComposition = composition;
 
         const userTok = estimateTextTokens(concept);
         let inputTokens = PRICING_CONFIG.SYSTEM_PROMPT_BASE_TOKENS + userTok;
@@ -688,6 +708,8 @@ export function usePromptGenerator() {
             ]
           : undefined;
 
+        let commercialBrief: any = undefined;
+
         try {
           const aiRes = await fetch('/api/generate-prompt', {
             method: 'POST',
@@ -696,8 +718,10 @@ export function usePromptGenerator() {
               rawIdea: concept,
               targetEngine: selectedEngine,
               stylePreset: selectedPreset,
+              composition,
               variationStyle: angle.style,
               variationIndex: idx + 1,
+              commercialDirection,
               isBlackAndWhite,
               includeMetadata,
             }),
@@ -712,6 +736,8 @@ export function usePromptGenerator() {
                   ? `${aiData.title} [Item #${idx + 1}]`
                   : `${aiData.title} [Var #${idx + 1}]`;
               }
+              if (aiData.commercialBrief) commercialBrief = aiData.commercialBrief;
+              if (aiData.composition) promptComposition = aiData.composition;
               if (aiData.adobeStockTitle !== undefined) adobeStockTitle = aiData.adobeStockTitle;
               if (Array.isArray(aiData.keywords)) keywords = aiData.keywords;
               if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
@@ -733,6 +759,9 @@ export function usePromptGenerator() {
           title,
           adobeStockTitle,
           keywords,
+          commercialBrief,
+          commercialDirection,
+          composition: promptComposition,
           optimizedPrompt,
           negativePrompt,
           vectorStyle,
@@ -748,6 +777,9 @@ export function usePromptGenerator() {
           title,
           adobeStockTitle,
           keywords,
+          commercialBrief,
+          commercialDirection,
+          composition: promptComposition,
           rawIdea: concept,
           optimizedPrompt,
           negativePrompt,
@@ -798,6 +830,9 @@ export function usePromptGenerator() {
       ...target,
       activePromptVersionIndex: versionIndex,
       title: selectedVersion.title || target.title,
+      commercialBrief: selectedVersion.commercialBrief || target.commercialBrief,
+      commercialDirection: selectedVersion.commercialDirection || target.commercialDirection,
+      composition: selectedVersion.composition || target.composition,
       optimizedPrompt: selectedVersion.optimizedPrompt,
       negativePrompt: selectedVersion.negativePrompt || target.negativePrompt,
       vectorStyle: selectedVersion.vectorStyle || target.vectorStyle,
@@ -827,7 +862,6 @@ export function usePromptGenerator() {
     const itemsWithImages = activePrompts.filter((p) => p.images.length > 0);
     if (itemsWithImages.length === 0) return;
 
-    const { sanitizeSeoFileName } = await import('../utils/imageMetadataInjector');
     const downloadList = itemsWithImages.map((item) => {
       const activeImg = item.images[item.images.length - 1];
       const seoTitle = item.adobeStockTitle || item.title;
@@ -894,6 +928,9 @@ export function usePromptGenerator() {
         : (target.promptVersions && target.promptVersions.length > 0 ? target.promptVersions.length - 1 : 0);
       const activePromptObj = target.promptVersions?.[activeVIdx];
       const activePromptText = activePromptObj?.optimizedPrompt || target.optimizedPrompt;
+      const activeBrief = activePromptObj?.commercialBrief || target.commercialBrief;
+      const activeDirection = activePromptObj?.commercialDirection || target.commercialDirection;
+      const activeComposition = activePromptObj?.composition || target.composition;
 
       const res = await fetch('/api/generate-seo-metadata', {
         method: 'POST',
@@ -904,6 +941,15 @@ export function usePromptGenerator() {
           vectorStyle: target.vectorStyle,
           stylePreset: target.stylePreset,
           isBlackAndWhite: target.isBlackAndWhite,
+          commercialDirection: activeDirection,
+          composition: activeComposition,
+          commercialConcept: activeBrief?.commercialConcept,
+          targetBuyer: activeBrief?.targetBuyer,
+          primaryUseCases: activeBrief?.primaryUseCases,
+          visualHook: activeBrief?.visualHook,
+          differentiation: activeBrief?.differentiation,
+          searchIntent: activeBrief?.searchIntent,
+          commercialBrief: activeBrief,
         }),
       });
 

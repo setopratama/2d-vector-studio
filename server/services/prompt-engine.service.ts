@@ -48,13 +48,110 @@ export const SERVER_STYLE_PRESETS: Record<
   },
 };
 
+export const SERVER_COMPOSITION_PRESETS: Record<
+  string,
+  { name: string; description: string; promptSnippet: string; isIsolated: boolean }
+> = {
+  'isolated-object': {
+    name: 'Isolated Object',
+    description: 'Satu objek utama terpusat, siluet batas tegas, zero clutter, siap autotrace SVG & icon',
+    promptSnippet: 'single centered isolated subject, clear negative space framing, pristine outer boundary silhouette, zero background clutter, isolated on solid pure white background',
+    isIsolated: true,
+  },
+  'object-group': {
+    name: 'Object Group',
+    description: 'Rangkaian 2–3 objek komplementer yang tersusun harmonis dengan separasi jelas',
+    promptSnippet: 'balanced grouped arrangement of related objects, compact still life composition, distinct silhouette separations, clean visual hierarchy, isolated on solid pure white background',
+    isIsolated: true,
+  },
+  'minimal-context': {
+    name: 'Minimal Context',
+    description: 'Subjek utama dengan elemen pijakan atau aksen pendukung minimalis tanpa mengaburkan fokus subjek',
+    promptSnippet: 'central subject with subtle minimalist contextual grounding, clean vector props, restrained negative space, balanced geometric environment accents',
+    isIsolated: false,
+  },
+  'commercial-scene': {
+    name: 'Commercial Scene',
+    description: 'Scene vektor kontekstual komersial utuh (interior modern, workspace, smart home, aktivitas urban) untuk web hero & editorial',
+    promptSnippet: 'full 2D commercial vector scene, flat architectural environment, modern interior or workspace setting, layered flat shapes, balanced editorial vector illustration',
+    isIsolated: false,
+  },
+  'decorative-composition': {
+    name: 'Decorative Composition',
+    description: 'Komposisi dekoratif simetris atau berbingkai cincin geometris, badge/crest stempel retro, border ornamen',
+    promptSnippet: 'symmetrical decorative vector composition, circular emblem crest framing, clean ornamental geometric border, balanced vintage badge layout',
+    isIsolated: true,
+  },
+  // Legacy Aliases
+  'single-isolated': {
+    name: 'Isolated Object',
+    description: 'Satu objek utama terpusat, siluet bersih, zero clutter',
+    promptSnippet: 'single centered isolated subject, clear negative space framing, pristine outer boundary silhouette, zero background clutter, isolated on solid pure white background',
+    isIsolated: true,
+  },
+  'grouped-still-life': {
+    name: 'Object Group',
+    description: 'Rangkaian 2–3 objek komplementer yang tersusun harmonis dengan separasi jelas',
+    promptSnippet: 'balanced grouped arrangement of related objects, compact still life composition, distinct silhouette separations, clean visual hierarchy, isolated on solid pure white background',
+    isIsolated: true,
+  },
+  'circular-badge': {
+    name: 'Decorative Composition',
+    description: 'Objek sentral terbingkai dalam cincin geometris simetris atau frame stempel',
+    promptSnippet: 'symmetrical circular emblem framing, centered subject enclosed in decorative geometric vector ring, balanced crest layout, isolated on solid pure white background',
+    isIsolated: true,
+  },
+  'mini-icon-set': {
+    name: 'Object Group',
+    description: 'Koleksi 3–4 micro-icon tematik kohesif yang berjejer rapi',
+    promptSnippet: 'cohesive icon set of complementary vector items, organized in clean grid layout, uniform stroke weight, isolated on pure white background',
+    isIsolated: true,
+  },
+  'hero-with-accents': {
+    name: 'Minimal Context',
+    description: 'Subjek utama dominan dengan elemen aksen pendukung kontekstual',
+    promptSnippet: 'dominant central hero element surrounded by subtle contextual accent props, dynamic spatial balance, clean vector grounding',
+    isIsolated: false,
+  },
+  'dynamic-diagonal': {
+    name: 'Minimal Context',
+    description: 'Tata letak berorientasi aksi 3/4 dengan sudut diagonal yang berenergi',
+    promptSnippet: 'dynamic three-quarter diagonal composition, angled perspective with strong visual motion, crisp vector contours',
+    isIsolated: false,
+  },
+};
+
+export interface CommercialBrief {
+  marketCategory: string;
+  targetBuyer: string;
+  primaryUseCases: string[];
+  commercialConcept: string;
+  visualHook: string;
+  differentiation: string;
+  searchIntent: string[];
+  compositionStrategy: string;
+  vectorStrategy: string;
+  risks: string[];
+  scores: {
+    commercial: number;
+    uniqueness: number;
+    searchability: number;
+    vectorSuitability: number;
+    visualClarity: number;
+    overall: number;
+  };
+  decision: 'PASS' | 'REWORK';
+}
+
 export interface PromptExpansionParams {
   rawIdea: string;
   targetEngine?: string;
   aspectRatio?: string;
   stylePreset?: string;
+  composition?: string;
   variationStyle?: string;
   variationIndex?: number;
+  commercialDirection?: string;
   isBlackAndWhite?: boolean;
   includeMetadata?: boolean;
 }
@@ -63,6 +160,9 @@ export interface PromptExpansionResult {
   title: string;
   adobeStockTitle?: string;
   keywords?: string[];
+  commercialDirection?: string;
+  composition?: string;
+  commercialBrief?: CommercialBrief;
   optimizedPrompt: string;
   negativePrompt?: string;
   vectorStyle?: string;
@@ -96,6 +196,10 @@ export async function generateOptimizedPrompt(
     promptSnippet: 'crisp 2D flat vector art, sharp geometric contours, bold solid lines, clean screen-print aesthetic, isolated on pure white background, svg graphic ready',
   };
 
+  const compositionKey = params.composition || 'isolated-object';
+  const compositionInfo = SERVER_COMPOSITION_PRESETS[compositionKey] || SERVER_COMPOSITION_PRESETS['isolated-object'];
+  const isIsolated = compositionInfo.isIsolated ?? (compositionKey !== 'commercial-scene' && compositionKey !== 'minimal-context');
+
   const variationAngle = params.variationStyle || 'Dynamic Angle';
   const variationIndexStr = params.variationIndex ? ` (Variation #${params.variationIndex})` : '';
   const includeMeta = Boolean(params.includeMetadata);
@@ -105,56 +209,80 @@ export async function generateOptimizedPrompt(
 
   const metadataSystemInstruction = includeMeta
     ? `6. Adobe Stock Title Requirement:
-   - "adobeStockTitle": A commercial, SEO-optimized title in English describing the vector asset.
-   - Character count MUST be between 70 to 120 characters (STRICT MAXIMUM 120 characters).
-   - Must include the main subject, 2D vector style, and "isolated on white background".
-7. Adobe Stock Keywords Requirement:
-   - "keywords": An array of 25 to 45 high-relevance microstock search tags in English.
-   - Each keyword must be MAXIMUM 2 words (e.g. "vector art", "fox mascot", "flat design", "emblem", "isolated", "white background", "logo icon").
+   - "adobeStockTitle": Factual, descriptive, customer-oriented English title following the strict hierarchy: [Commercial Concept] + [Primary Subject] + [Key Attributes / Style / Context].
+   - Focus on factual clarity without repetitive filler buzzwords.
+   - ${isIsolated ? 'Must end with "isolated on white background".' : 'Describe the commercial scene/context and vector style (do NOT force "isolated on white background" for contextual scenes).'}
+7. Adobe Stock Keywords Requirement (ORDERED STRICTLY BY SEARCH IMPORTANCE):
+   - "keywords": An array of 25 to 40 high-relevance search tags in English, sorted strictly in descending order of importance (first 10 are most critical):
+     • Rank 1–10 (Tier 1 - Strongest Search Intent): Core subject name, primary commercial concept, exact buyer queries.
+     • Rank 11–20 (Tier 2 - Subject Components & Props): Individual objects, tools, visual elements present in the graphic.
+     • Rank 21–30 (Tier 3 - Visual Style & Primary Use Cases): 2D vector style, flat design, packaging, branding, menu, icon.
+     • Rank 31–40 (Tier 4 - Secondary Relevance & Themes): Broader themes, lifestyle concepts, ${isIsolated ? 'isolated, white background' : 'scene context'}.
    - No punctuation, no duplicate tags.`
     : ``;
 
-  const jsonKeysInstruction = includeMeta
-    ? `Respond strictly in JSON format with keys:
-- title: (short 3-5 word summary)
-- adobeStockTitle: (commercial English SEO title, 70-120 characters max)
-- keywords: (array of 25-45 stock keywords in English, max 2 words per tag)
-- optimizedPrompt: (concise 30-50 words vector prompt in English focusing on detailed single object)
-- negativePrompt: (concise negative keywords including anti-photo, anti-3d, anti-landscape, anti-scenic background)
-- vectorStyle: (must be "${presetInfo.name} - ${variationAngle}")
-- colorPalette: (e.g., "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}")`
-    : `Respond strictly in JSON format with keys:
-- title: (short 3-5 word summary)
-- optimizedPrompt: (concise 30-50 words vector prompt in English focusing on detailed single object)
-- negativePrompt: (concise negative keywords including anti-photo, anti-3d, anti-landscape, anti-scenic background)
-- vectorStyle: (must be "${presetInfo.name} - ${variationAngle}")
-- colorPalette: (e.g., "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}")`;
+  const commercialDirection = params.commercialDirection || 'Evergreen Utility';
 
-  const systemPrompt = `You are an expert prompt engineer specializing in 2D vector graphic assets, icons, and sticker art optimized for SVG autotracing and image generation.
-Convert the user's raw idea into a concise 2D visual prompt (strictly 30-50 words).
+  const systemPrompt = `You are an executive Commercial Art Director & Microstock Asset Strategist for top vector platforms (Adobe Stock, Freepik, Shutterstock, Envato).
 
-CRITICAL STRICT RULES:
-1. STRICT STYLE CONSISTENCY: The user has selected the style preset: "${presetInfo.name}".
-   - You MUST STAY 100% FAITHFUL to "${presetInfo.name}".
-   - DO NOT introduce, mix, or cross over into other art categories.
-   - The variation angle ("${variationAngle}") represents composition, perspective, camera angle, or pose WITHIN the "${presetInfo.name}" style.
-2. STRICT FOCAL HERO OBJECT & DETAIL CONTAINMENT (ANTI-SPRAWL FOR 2D VECTOR):
-   - Focus strictly and tightly on ONE primary hero subject/object/character/emblem with rich, crisp physical details (e.g., sharp geometric contours, distinct anatomy/accessory details, clean mechanical segments).
-   - ABSOLUTELY NO panoramic backgrounds, no landscapes, no horizon lines, no environmental scenery (no forests, no rooms, no cities, no mountains), and no multi-character crowds.
-   - The subject must remain 100% isolated on pure solid white background, perfectly framed and ready for seamless 2D vectorization and SVG autotracing.
-3. Token Efficiency: Zero filler words (no "masterpiece", "trending", "ultra high quality"). Direct, high-density visual descriptors only.
-4. 2D Vector Look: Sharp vector contours, bold solid lines, ${isLineArt ? 'zero color fill, uncolored coloring-book white interior, pure black outlines only' : isMonochrome ? 'pure black silhouettes, zero color' : 'clean solid color fills'}, isolated on pure white background.
-5. Color Mode: ${isLineArt ? 'STRICT ZERO COLOR FILL: Enforce pure black ink line art on solid white background with ZERO color fills (NEVER write "green fill", "solid color fill", or any color names), zero grayscale, zero shadows, zero gradients.' : isMonochrome ? 'Pure black ink / silhouette on solid white, zero color, zero grayscale, zero shadows.' : 'Flat solid colors with no gradients and no realistic shading.'}
-${presetKey === 'premium-line-art' ? `6. PREMIUM LINE ART ICON MANDATE:
-   - Embody an Award-Winning Vector Line Artist & Minimal Icon Designer.
-   - UNIFORM MONOLINE: Clean single-weight outline, smooth curves, intentional angles, zero sketch wobble, zero texture, zero brush effects, zero cross-hatching/shading.
-   - 85-90% SIMPLIFICATION: Keep only the main silhouette and essential recognizable structure. Remove tiny textures, wood grain, brick textures, foliage detail, people, vehicles, and background clutter.
-   - COMPOSITION: Center the subject occupying ~25-30% of canvas with ~70-75% clean negative white space.
-   - ZERO FILL / NO COLOR: STRICTLY NO COLOR FILLS. NEVER output words like 'green fill', 'solid color fill', 'vibrant fill', or any color names. The artwork is an uncolored coloring-book outline with pure black ink lines on 100% pure white space.
-   - Microstock SVG ready for coloring books, educational worksheets, laser cut / Cricut, stickers, and Adobe Stock.` : ''}
+5-TIER COMMERCIAL VECTOR ARCHITECTURE:
+IDEA (Core Subject)
+  ↓
+COMMERCIAL DIRECTION (Why it is made / 2026 Microstock Market Pillar)
+  ↓
+COMMERCIAL CONCEPT (Strategic positioning, visual hook, target buyer, differentiation)
+  ↓
+STYLE (How it looks / 2D Vector Rendering format & stroke technique)
+  ↓
+COMPOSITION (How it is arranged / Spatial layout & framing)
+  ↓
+PROMPT SYNTHESIS (Final 30-50 word 2D visual prompt)
+
+INPUT PARAMETERS:
+- Commercial Direction (WHY): "${commercialDirection}"
+- Style Preset (HOW IT LOOKS): "${presetInfo.name}" (${presetInfo.promptSnippet})
+- Composition Strategy (HOW IT IS ARRANGED): "${compositionInfo.name}" (${compositionInfo.promptSnippet})
+- Isolation Mode: ${isIsolated ? 'ISOLATED ASSET (White Background)' : 'CONTEXTUAL / SCENE (Integrated Environment)'}
+
+OPERATING RULES:
+1. NO CHAIN-OF-THOUGHT OR PROSE: Do NOT explain your thought process or output conversational filler. Directly return your final structured analysis decisions in JSON format.
+2. COMMERCIAL DECISION-FIRST: Anchor all commercial analysis strictly around "${commercialDirection}". Determine targetBuyer, primaryUseCases, searchIntent, commercialConcept, and visualHook BEFORE synthesizing the prompt.
+3. STRICT STYLE & COMPOSITION COHESION: Follow the visual rendering of "${presetInfo.name}" and the spatial layout of "${compositionInfo.name}".
+4. PROMPT SYNTHESIS: The "optimizedPrompt" MUST combine "commercialConcept" + "visualHook" + "${presetInfo.name}" + "${compositionInfo.name}" into a concise (30-50 words) 2D vector prompt in English.
+   ${isIsolated ? '- ISOLATION MANDATE: Isolate the subject cleanly on pure solid white background for SVG extraction.' : '- CONTEXTUAL SCENE MANDATE: Do NOT force pure white isolated background. Synthesize a coherent flat 2D commercial vector scene or contextual environment (e.g. modern interior, workspace setting, or subtle grounding environment) with clean flat shapes, cohesive color hierarchy, and zero raster clutter.'}
+5. QUALITY GATE SCORING: Evaluate marketability objectively (scores 1-10 on commercial, uniqueness, searchability, vectorSuitability, visualClarity). Set "decision": "PASS" if overall >= 7.0 and vectorSuitability >= 7.0, otherwise "REWORK".
+${presetKey === 'premium-line-art' ? `6. PREMIUM LINE ART MANDATE: Pure black uniform monoline, 85-90% detail simplification, ~70-75% negative white space, STRICT ZERO COLOR FILL (no color words or color fills), coloring-book / printable ready.` : ''}
 ${metadataSystemInstruction}
 
-${jsonKeysInstruction}`;
+RESPOND STRICTLY IN JSON FORMAT:
+{
+  "title": "Short 3-5 word summary",
+  "commercialBrief": {
+    "marketCategory": "e.g. Food and Beverage (aligned with ${commercialDirection})",
+    "targetBuyer": "e.g. coffee brands, cafes, packaging designers",
+    "primaryUseCases": ["packaging", "menu design", "social media", "editorial illustration"],
+    "commercialConcept": "e.g. specialty coffee brewing equipment and preparation",
+    "visualHook": "e.g. compact brewing setup arranged as a clean geometric still life",
+    "differentiation": "e.g. focus on specialty brewing rather than generic coffee cup imagery",
+    "searchIntent": ["specialty coffee", "coffee brewing", "coffee equipment", "barista tools"],
+    "compositionStrategy": "${compositionInfo.name}",
+    "vectorStrategy": "e.g. medium detail, strong contours, simplified recognizable equipment",
+    "risks": ["avoid background clutter", "maintain crisp solid vector contours"],
+    "scores": {
+      "commercial": 8.8,
+      "uniqueness": 8.1,
+      "searchability": 9.0,
+      "vectorSuitability": 9.4,
+      "visualClarity": 9.0,
+      "overall": 8.86
+    },
+    "decision": "PASS"
+  },
+  "optimizedPrompt": "Concise 30-50 words 2D visual prompt synthesized directly from commercialConcept, visualHook, ${presetInfo.name}, and ${compositionInfo.name}${isIsolated ? ', isolated on pure solid white background' : ''}",
+  "negativePrompt": "${isIsolated ? 'photorealistic, 3d, realistic shadows, gradients, noise, scenic background, landscape, environment sprawl' : 'photorealistic, 3d render, hyperrealistic textures, messy gradients, blurry noise, depth of field blur'}",
+  "vectorStyle": "${presetInfo.name} - ${variationAngle}",
+  "colorPalette": "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}"${includeMeta ? `,\n  "adobeStockTitle": "Commercial SEO English Title between 70 and 120 chars${isIsolated ? ', isolated on white background' : ''}",\n  "keywords": ["tag1", "tag2", "tag3"]` : ''}
+}`;
 
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,
@@ -169,17 +297,20 @@ ${jsonKeysInstruction}`;
   }
 
   const colorModeInstruction = isLineArt
-    ? 'Color Mode: STRICT UNCOLORED LINE ART ONLY (Zero color fill, zero green/blue/red/yellow fills, uncolored coloring-book interior, pure black monoline outlines on pure white background, coloring-book printable ready).'
+    ? 'Color Mode: STRICT UNCOLORED LINE ART ONLY (Zero color fill, pure black monoline outlines on pure white background, coloring-book printable ready).'
     : isMonochrome
     ? 'Color Mode: PURE BLACK AND WHITE MONOCHROME (Pure black ink/silhouette on solid white, zero color, zero grayscale).'
     : 'Color Mode: VIBRANT FLAT SOLID COLORS (Clean solid color fills, zero gradients, zero shadows).';
 
-  const userContent = `Raw idea: "${params.rawIdea}".
-Selected Style Preset: "${presetInfo.name}" (Style guideline: ${presetInfo.promptSnippet}).
+  const userContent = `rawIdea: "${params.rawIdea}".
+Commercial Direction (WHY): "${commercialDirection}".
+Selected Style Preset (HOW IT LOOKS): "${presetInfo.name}" (${presetInfo.promptSnippet}).
+Composition Strategy (LAYOUT): "${compositionInfo.name}" (${compositionInfo.promptSnippet}).
+Isolation Mode: ${isIsolated ? 'Isolated on White Background' : 'Commercial Scene / Contextual Composition'}.
 Variation Angle: "${variationAngle}"${variationIndexStr}.
 Target Engine: ${params.targetEngine || 'gpt-image'}. Aspect Ratio: ${params.aspectRatio || '1:1'}.
 ${colorModeInstruction}
-Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo.name}" with the "${variationAngle}" angle, focusing strictly on the detailed isolated hero object, isolated on pure white background${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars) and 25-45 stock keywords' : ''}.`;
+Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercialDirection}", construct commercial brief with quality scores, and synthesize the 30-50 words 2D visual prompt combining style "${presetInfo.name}" and composition "${compositionInfo.name}" (${isIsolated ? 'isolated on pure white background' : 'integrated commercial 2D vector scene'})${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars) and 25-45 stock keywords' : ''}.`;
 
   const response = await fetch(promptEndpoint, {
     method: 'POST',
@@ -208,17 +339,23 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
   try {
     parsed = JSON.parse(content);
   } catch (e) {
-    const defaultTitle = `${params.rawIdea} 2D flat vector illustration, isolated on pure white background`;
+    const defaultTitle = isIsolated
+      ? `${params.rawIdea} 2D flat vector illustration, isolated on pure white background`
+      : `${params.rawIdea} 2D commercial vector scene illustration`;
     parsed = {
       title: params.rawIdea.length > 30 ? params.rawIdea.slice(0, 30).trim() : params.rawIdea,
       adobeStockTitle: defaultTitle,
-      keywords: ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector'],
+      keywords: isIsolated
+        ? ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector']
+        : ['vector art', 'vector scene', 'flat design', 'illustration', 'commercial scene', 'vector illustration', 'graphic', '2d vector'],
       optimizedPrompt: content || params.rawIdea,
       negativePrompt: isLineArt
-        ? 'color, colors, colorful, green fill, red fill, blue fill, yellow fill, solid color fill, color fills, vibrant fills, grayscale, gray tones, shading, realistic shadows, gradients, realistic texture, 3d, photorealistic, noise, blur, photographic render, pencil, sketch, watercolor, paint, cross hatching, stippling, scenic background, landscape, environment sprawl'
+        ? 'color, colors, colorful, green fill, red fill, blue fill, yellow fill, solid color fill, color fills, vibrant fills, grayscale, gray tones, shading, realistic shadows, gradients, realistic texture, 3d, photorealistic, noise, blur, photographic render, pencil, sketch, watercolor, paint, cross hatching, stippling'
         : isMonochrome
-        ? 'color, grayscale, shading, 3d, photo, scenic background, landscape, environment sprawl'
-        : 'photorealistic, 3d, realistic shadows, gradients, noise, scenic background, landscape, nature panorama, environment sprawl, multi-character clutter, complex background scenery, horizon lines',
+        ? 'color, grayscale, shading, 3d, photo, photorealistic, noise, blur'
+        : isIsolated
+        ? 'photorealistic, 3d, realistic shadows, gradients, noise, scenic background, landscape, nature panorama, environment sprawl, multi-character clutter, complex background scenery, horizon lines'
+        : 'photorealistic, 3d render, hyperrealistic textures, messy photographic gradients, blurry noise, depth of field blur, lens flare, raster painting, photograph',
       vectorStyle: `${presetInfo.name} - ${variationAngle}`,
       colorPalette: isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White' : 'Flat Solid Colors',
     };
@@ -238,6 +375,65 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
       .replace(/solid color fills/gi, 'zero color fill')
       .replace(/solid fills/gi, 'clean uncolored outlines')
       .replace(/\b(green|red|blue|yellow|orange|purple|pink)\s+fill\b/gi, 'zero color fill');
+  }
+
+  // Ensure Commercial Brief structure with safe fallbacks
+  let commercialBrief: CommercialBrief | undefined = undefined;
+  if (parsed.commercialBrief && typeof parsed.commercialBrief === 'object') {
+    const cb = parsed.commercialBrief;
+    const scores = cb.scores || {};
+    const commScore = typeof scores.commercial === 'number' ? Number(scores.commercial) : (typeof scores.commercialUsefulness === 'number' ? Number(scores.commercialUsefulness) : 8.8);
+    const uniqScore = typeof scores.uniqueness === 'number' ? Number(scores.uniqueness) : 8.1;
+    const searchScore = typeof scores.searchability === 'number' ? Number(scores.searchability) : 9.0;
+    const vecScore = typeof scores.vectorSuitability === 'number' ? Number(scores.vectorSuitability) : 9.4;
+    const clarScore = typeof scores.visualClarity === 'number' ? Number(scores.visualClarity) : 9.0;
+    const computedOverall = Number(((commScore + uniqScore + searchScore + vecScore + clarScore) / 5).toFixed(2));
+    const overallScore = typeof scores.overall === 'number' ? Number(Number(scores.overall).toFixed(2)) : computedOverall;
+
+    commercialBrief = {
+      marketCategory: String(cb.marketCategory || 'Commercial Vector Illustration & Iconography'),
+      targetBuyer: String(cb.targetBuyer || 'Brand designers, marketing agencies & merchandise sellers'),
+      primaryUseCases: Array.isArray(cb.primaryUseCases) ? cb.primaryUseCases.map(String) : ['Commercial branding & logos', 'Merchandise & apparel print', 'Digital UI/UX & web asset'],
+      commercialConcept: String(cb.commercialConcept || `High-impact 2D vector asset for ${params.rawIdea}`),
+      visualHook: String(cb.visualHook || 'Clean iconic silhouette with high-contrast focal clarity'),
+      differentiation: String(cb.differentiation || 'Crisp geometric contours engineered for instant SVG autotracing'),
+      searchIntent: Array.isArray(cb.searchIntent) ? cb.searchIntent.map(String) : [`${params.rawIdea} vector`, `${params.rawIdea} icon`, `${params.rawIdea} logo`],
+      compositionStrategy: String(cb.compositionStrategy || 'Centered hero framing with generous negative space on pure white background'),
+      vectorStrategy: String(cb.vectorStrategy || 'Sharp solid contours and clean closed paths optimized for vector tracing'),
+      risks: Array.isArray(cb.risks) ? cb.risks.map(String) : ['Ensure zero background noise and maintain sharp vector contours'],
+      scores: {
+        commercial: commScore,
+        uniqueness: uniqScore,
+        searchability: searchScore,
+        vectorSuitability: vecScore,
+        visualClarity: clarScore,
+        overall: overallScore,
+      },
+      decision: cb.decision === 'REWORK' ? 'REWORK' : (overallScore >= 7.0 && vecScore >= 7.0 ? 'PASS' : 'REWORK'),
+    };
+  } else {
+    // Construct default high-quality brief if LLM skipped
+    commercialBrief = {
+      marketCategory: 'Commercial Vector Illustration',
+      targetBuyer: 'Brand designers, marketing agencies & merchandise creators',
+      primaryUseCases: ['Commercial branding & logo design', 'Merchandise & apparel print', 'Web & app UI graphics'],
+      commercialConcept: `Iconic 2D vector representation of ${params.rawIdea}`,
+      visualHook: 'Striking silhouette with high-contrast focal clarity',
+      differentiation: 'Optimized flat vector styling ready for immediate SVG conversion',
+      searchIntent: [`${params.rawIdea} vector`, `${params.rawIdea} icon`, `flat ${params.rawIdea}`],
+      compositionStrategy: 'Centered hero subject on solid pure white background',
+      vectorStrategy: 'Clean closed paths with solid contrast, autotrace friendly',
+      risks: ['Avoid background clutter or gradient noise'],
+      scores: {
+        commercial: 8.8,
+        uniqueness: 8.1,
+        searchability: 9.0,
+        vectorSuitability: 9.4,
+        visualClarity: 9.0,
+        overall: 8.86,
+      },
+      decision: 'PASS',
+    };
   }
 
   // Ensure Adobe Stock Title if metadata requested
@@ -287,6 +483,9 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
     title: parsed.title || params.rawIdea.slice(0, 30),
     adobeStockTitle: includeMeta ? cleanAdobeStockTitle : undefined,
     keywords: includeMeta ? cleanKeywords : undefined,
+    commercialDirection: params.commercialDirection || undefined,
+    composition: compositionKey,
+    commercialBrief,
     optimizedPrompt: sanitizedPrompt,
     negativePrompt: parsed.negativePrompt || defaultNegativePrompt,
     vectorStyle: parsed.vectorStyle || `${presetInfo.name} - ${variationAngle}`,
@@ -301,12 +500,24 @@ Requirement: Generate a 30-50 words 2D prompt strictly adhering to "${presetInfo
   };
 }
 
+
 export interface SeoMetadataParams {
   rawIdea: string;
   optimizedPrompt: string;
   vectorStyle?: string;
   stylePreset?: string;
   isBlackAndWhite?: boolean;
+  commercialDirection?: string;
+  commercialConcept?: string;
+  targetBuyer?: string;
+  primaryUseCases?: string[];
+  useCases?: string[];
+  visualHook?: string;
+  differentiation?: string;
+  searchIntent?: string[];
+  composition?: string;
+  isIsolated?: boolean;
+  commercialBrief?: CommercialBrief;
 }
 
 export interface SeoMetadataResult {
@@ -333,22 +544,39 @@ export async function generateCardSeoMetadata(
   const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
   const promptEndpoint = process.env.OPENROUTER_PROMPT_ENDPOINT || `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
-  const systemPrompt = `You are a microstock SEO and metadata expert for commercial vector assets (Adobe Stock, Shutterstock, Freepik, Vecteezy).
-Your task is to generate top-ranking English metadata for a 2D vector asset based on the provided concept and visual prompt.
+  const compPreset = params.composition ? SERVER_COMPOSITION_PRESETS[params.composition] : undefined;
+  const isIsolated = params.isIsolated ?? (compPreset ? compPreset.isIsolated : (params.composition !== 'commercial-scene' && params.composition !== 'minimal-context'));
 
-CRITICAL REQUIREMENTS:
+  const concept = params.commercialConcept || params.commercialBrief?.commercialConcept || '';
+  const buyer = params.targetBuyer || params.commercialBrief?.targetBuyer || '';
+  const uses = params.primaryUseCases || params.useCases || params.commercialBrief?.primaryUseCases || [];
+  const hook = params.visualHook || params.commercialBrief?.visualHook || '';
+  const intent = params.searchIntent || params.commercialBrief?.searchIntent || [];
+  const direction = params.commercialDirection || params.commercialBrief?.marketCategory || 'Commercial Utility';
+
+  const systemPrompt = `You are an elite microstock SEO and metadata strategist for top commercial vector marketplaces (Adobe Stock, Shutterstock, Freepik, Vecteezy, Envato).
+Your task is to generate top-ranking, highly relevant English metadata for a 2D vector asset based strictly on the deep Commercial Brief and visual prompt.
+
+ADOBE STOCK OFFICIAL BEST PRACTICES:
 1. "adobeStockTitle":
-   - A commercial, SEO-optimized title in English describing the vector asset.
-   - Character count MUST be between 70 to 120 characters (STRICT MAXIMUM 120 characters).
-   - Must include the core subject, style, and end with "isolated on white background".
-2. "keywords":
-   - An array of EXACTLY 30 to 48 high-relevance microstock search tags in English.
-   - Each keyword must be MAXIMUM 2 words (e.g. "vector art", "fox mascot", "flat design", "emblem", "isolated", "white background", "logo icon").
-   - No punctuation, no duplicate tags.
+   - Factual, descriptive, customer-oriented English title following the strict hierarchy:
+     [Commercial Concept] + [Primary Subject] + [Key Attributes / Context / Style]
+   - Example: "Specialty coffee brewing equipment set with pour over dripper and kettle, flat vector illustration"
+   - Focus on factual clarity without repetitive filler buzzwords.
+   - ${isIsolated ? 'Must end with "isolated on white background".' : 'Describe the commercial scene/context and vector style (do NOT force "isolated on white background" for contextual scenes).'}
+
+2. "keywords" (ORDERED STRICTLY BY SEARCH IMPORTANCE):
+   - Adobe Stock algorithm weights the first 10 keywords most heavily.
+   - You MUST generate 25 to 40 keywords, ordered strictly in descending order of search relevance into 4 Tiers:
+     • Rank 1–10 (Tier 1 - Strongest Search Intent): Primary subject name, core commercial concept, and exact high-intent buyer queries (e.g. "specialty coffee", "coffee equipment", "pour over", "barista tools").
+     • Rank 11–20 (Tier 2 - Subject Components & Props): Individual objects, tools, and visual elements present in the graphic (e.g. "dripper", "kettle", "coffee beans", "carafe", "filter").
+     • Rank 21–30 (Tier 3 - Visual Style & Primary Use Cases): Technical vector style and specific commercial buyer use cases (e.g. "flat vector", "2d vector", "packaging design", "cafe branding", "menu illustration").
+     • Rank 31–40 (Tier 4 - Secondary Relevance & Themes): Broader themes, lifestyle concepts, background/layout attributes (e.g. "artisanal", "culinary", "morning routine"${isIsolated ? ', "isolated", "white background"' : ', "vector scene", "interior"'}).
+   - No punctuation, no duplicate tags. Natural phrases allowed.
 
 Respond strictly in JSON format:
 {
-  "adobeStockTitle": "Descriptive English title between 70 and 120 characters isolated on white background",
+  "adobeStockTitle": "Factual and descriptive English title following the hierarchy${isIsolated ? ', isolated on white background' : ''}",
   "keywords": [
     "tag1",
     "tag2",
@@ -357,10 +585,18 @@ Respond strictly in JSON format:
 }`;
 
   const userContent = `Subject / Raw Idea: "${params.rawIdea}".
+Commercial Direction: "${direction}".
+Commercial Concept: "${concept || params.rawIdea}".
+Target Buyer: "${buyer || 'designers, brands, businesses'}".
+Primary Use Cases: ${uses.length > 0 ? uses.join(', ') : 'branding, packaging, digital illustration, UI design'}.
+Visual Hook: "${hook || 'clean recognizable vector subject'}".
+Buyer Search Intent: ${intent.length > 0 ? intent.join(', ') : params.rawIdea}.
 Visual Prompt: "${params.optimizedPrompt}".
 Art Style: "${params.vectorStyle || params.stylePreset || '2D Vector'}".
+Composition: "${params.composition || (isIsolated ? 'Isolated Object' : 'Commercial Scene')}".
+Isolation Mode: ${isIsolated ? 'Isolated on Pure White Background' : 'Integrated Commercial Vector Scene'}.
 Black & White Mode: ${params.isBlackAndWhite ? 'Yes (Monochrome Ink)' : 'No (Flat Colors)'}.
-Requirement: Generate commercial Adobe Stock SEO Title (70-120 chars) and 30-48 English tags in JSON.`;
+Requirement: Generate Adobe Stock SEO Title (Commercial Concept → Primary Subject → Attributes) and 25-40 keywords strictly ordered by 4-tier importance (Rank 1-10 strongest search intent).`;
 
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,

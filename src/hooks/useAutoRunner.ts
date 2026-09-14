@@ -11,8 +11,11 @@ export type RunnerPhase = 'generating-prompt' | 'rendering-image' | 'saving' | '
 export interface AutoRunnerConfig {
   rawIdea: string;
   selectedPreset: string;
+  commercialDirection?: string;
+  composition?: string;
   isBlackAndWhite: boolean;
   targetQuantity: number;
+  qualityGateEnabled?: boolean;
   selectedEngine?: TargetEngine;
   includeMetadata?: boolean;
   onItemComplete?: (item: PromptItem) => void;
@@ -121,6 +124,8 @@ export function useAutoRunner() {
         'isolated', 'white background', 'clipart', '2d vector', 'stock asset'
       ];
 
+      let commercialBrief: any = undefined;
+
       try {
         const aiRes = await fetch('/api/generate-prompt', {
           method: 'POST',
@@ -129,8 +134,10 @@ export function useAutoRunner() {
             rawIdea,
             targetEngine: selectedEngine,
             stylePreset: selectedPreset,
+            composition: config.composition,
             variationStyle: angle.style,
             variationIndex: i + 1,
+            commercialDirection: config.commercialDirection,
             isBlackAndWhite,
             includeMetadata: activeConfigRef.current?.includeMetadata ?? false,
           }),
@@ -141,6 +148,7 @@ export function useAutoRunner() {
           if (aiData.optimizedPrompt) {
             optimizedPrompt = aiData.optimizedPrompt;
             if (aiData.title) title = `${aiData.title} [#${i + 1}]`;
+            if (aiData.commercialBrief) commercialBrief = aiData.commercialBrief;
             if (aiData.adobeStockTitle) adobeStockTitle = aiData.adobeStockTitle;
             if (Array.isArray(aiData.keywords) && aiData.keywords.length > 0) keywords = aiData.keywords;
             if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
@@ -165,17 +173,75 @@ export function useAutoRunner() {
       }
 
       // -------------------------------------------------------------
-      // 2. TAHAP IMAGE RENDERING
+      // 2. TAHAP IMAGE RENDERING (Dengan Commercial Quality Gate)
       // -------------------------------------------------------------
-      setCurrentPhase('rendering-image');
+      const isQualityGateActive = config.qualityGateEnabled ?? true;
+      const isRework = commercialBrief?.decision === 'REWORK';
 
       const dateDir = new Date().toISOString().split('T')[0];
       const versionNum = 1;
       const fileName = `img-wiz-${now}-${i}-v${versionNum}.png`;
       let relativePath = `outputs/${dateDir}/${fileName}`;
       let pngDataUrl = '';
-
       let realApiSuccess = false;
+
+      if (isQualityGateActive && isRework) {
+        // QUALITY GATE TRIGGERED: Skip costly GPT Image 2.5 ($0.020) render for low scoring/rework concepts
+        setCurrentPhase('saving');
+
+        const newItem: PromptItem = {
+          id: promptId,
+          batchId,
+          title,
+          adobeStockTitle,
+          keywords,
+          commercialBrief,
+          commercialDirection: config.commercialDirection,
+          composition: config.composition || 'isolated-object',
+          rawIdea,
+          optimizedPrompt,
+          negativePrompt,
+          vectorStyle,
+          targetEngine: selectedEngine,
+          aspectRatio: '1:1',
+          stylePreset: selectedPreset,
+          isBlackAndWhite,
+          variationIndex: i + 1,
+          inputTokens,
+          outputTokens,
+          totalTokens: inputTokens + outputTokens,
+          promptCostUsd,
+          promptCostIdr,
+          generationCount: 0,
+          imageCostUsd: '0.000000',
+          totalCostUsd: promptCostUsd,
+          totalCostIdr: promptCostIdr,
+          activeImageIndex: 0,
+          images: [],
+          isFavorite: false,
+          createdAt: Date.now(),
+        };
+
+        // Save to SQLite
+        await saveToDb(newItem);
+
+        // Update state
+        runningItems = [newItem, ...runningItems];
+        setGeneratedItems([...runningItems]);
+        totalCost += parseFloat(promptCostUsd);
+        setAccumulatedCostUsd(totalCost);
+
+        if (onItemComplete) {
+          onItemComplete(newItem);
+        }
+
+        // Delay between items
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        continue;
+      }
+
+      setCurrentPhase('rendering-image');
+
       try {
         const res = await fetch('/api/generate-image', {
           method: 'POST',
@@ -193,18 +259,13 @@ export function useAutoRunner() {
           }
         }
       } catch (apiErr) {
-        console.warn('AutoRunner Image API fallback:', apiErr);
+        console.warn('API Image render fallback:', apiErr);
       }
 
+      // Fallback to high-quality SVG vector graphic if offline or API failure
       if (!realApiSuccess) {
-        const svgUrl = generate2DVectorSvgDataUrl(
-          rawIdea,
-          isBlackAndWhite,
-          selectedPreset,
-          1,
-          i
-        );
-        pngDataUrl = await convertSvgToPngDataUrl(svgUrl, 1024);
+        const svgString = generate2DVectorSvgDataUrl(rawIdea, isBlackAndWhite, selectedPreset, i + 1);
+        pngDataUrl = await convertSvgToPngDataUrl(svgString, 1024);
       }
 
       // -------------------------------------------------------------
@@ -230,6 +291,9 @@ export function useAutoRunner() {
         title,
         adobeStockTitle,
         keywords,
+        commercialBrief,
+        commercialDirection: config.commercialDirection,
+        composition: config.composition || 'isolated-object',
         rawIdea,
         optimizedPrompt,
         negativePrompt,

@@ -54,6 +54,8 @@ export function App() {
   const [batchCount, setBatchCount] = useState<number>(5);
   const [selectedEngine, setSelectedEngine] = useState<TargetEngine>('gpt-image');
   const [selectedPreset, setSelectedPreset] = useState('flat-vector');
+  const [selectedCommercialDirection, setSelectedCommercialDirection] = useState('evergreen-utility');
+  const [selectedComposition, setSelectedComposition] = useState('isolated-object');
   const [isBlackAndWhite, setIsBlackAndWhite] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -115,6 +117,8 @@ export function App() {
       batchCount: effectiveBatchCount,
       selectedEngine,
       selectedPreset,
+      commercialDirection: selectedCommercialDirection,
+      composition: selectedComposition,
       isBlackAndWhite,
       includeMetadata,
     });
@@ -194,6 +198,10 @@ export function App() {
             setSelectedEngine={setSelectedEngine}
             selectedPreset={selectedPreset}
             setSelectedPreset={setSelectedPreset}
+            selectedCommercialDirection={selectedCommercialDirection}
+            setSelectedCommercialDirection={setSelectedCommercialDirection}
+            selectedComposition={selectedComposition}
+            setSelectedComposition={setSelectedComposition}
             isBlackAndWhite={isBlackAndWhite}
             setIsBlackAndWhite={setIsBlackAndWhite}
             tokenCount={userTokens}
@@ -318,7 +326,7 @@ export function App() {
                 className="flex items-center gap-1 px-1.5 py-0.5 border border-stone-300 bg-stone-50 hover:bg-stone-900 hover:text-white text-[10px] font-bold text-stone-700 transition-colors cursor-pointer"
               >
                 <Tag className="w-3 h-3 text-amber-600" />
-                <span>v1.3.1</span>
+                <span>v2.0.0</span>
               </button>
 
               <span>•</span>

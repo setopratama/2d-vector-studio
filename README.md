@@ -1,11 +1,11 @@
 # ⚡ Agentic AI 2D Vector Studio
 
-[![Version](https://img.shields.io/badge/version-v1.3.1-amber.svg?style=flat-square)](docs/VERSION_CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v2.0.0-amber.svg?style=flat-square)](docs/VERSION_CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Proprietary-stone.svg?style=flat-square)](#-lisensi)
 [![Stack](https://img.shields.io/badge/stack-React_19_+_Fastify_+_SQLite-blue.svg?style=flat-square)](docs/ARCHITECTURE.md)
 [![Metadata](https://img.shields.io/badge/metadata-IPTC_%7C_EXIF_%7C_XMP-emerald.svg?style=flat-square)](docs/METADATA_SPECIFICATION.md)
 
-Studio pembuatan prompt dan aset visual **2D Siap Vektor (Vector-Ready Assets)** berbasis AI lokal mandiri (*local-first / self-hosted*). Dirancang khusus untuk desainer, ilustrator, dan kontributor microstock (**Adobe Stock**, **Shutterstock**, **Freepik**) dengan sistem **Pra-Estimasi Biaya Transparan (Prompt vs Gambar)**, **AI Concept Expander**, **Auto-Runner Wizard**, **7 Gaya Grafis 2D Siap Vektor**, dan **Injektor Metadata Biner 3-Lapisan Tanpa Dependensi Luar**.
+Studio pembuatan prompt dan aset visual **Commercial Art Director & 2D Vector-Ready Studio** berbasis AI lokal mandiri (*local-first / self-hosted*). Dirancang khusus untuk desainer, ilustrator, dan kontributor microstock (**Adobe Stock**, **Shutterstock**, **Freepik**) dengan **Arsitektur 5-Tier Commercial Decision**, **10 Commercial Directions**, **5-Dimension Commercial Scoring & Quality Gate**, **Dynamic Composition Modes**, **Pra-Estimasi Biaya Transparan (Prompt vs Gambar)**, **AI Concept Expander**, **Auto-Runner Wizard**, **7 Gaya Grafis 2D Siap Vektor**, dan **Injektor Metadata Biner 3-Lapisan Tanpa Dependensi Luar**.
 
 ---
 
@@ -18,7 +18,7 @@ Untuk panduan mendalam dan spesifikasi teknis lengkap, silakan merujuk ke dokume
 | 📖 **[Panduan Pengguna (User Guide)](docs/USER_GUIDE.md)** | Panduan alur kerja dari input 1–2 kata dasar, pemilihan 7 gaya 2D, kalkulasi biaya, Auto-Runner, hingga ekspor PNG ber-metadata. |
 | 🏗️ **[Arsitektur & Spesifikasi Sistem](docs/ARCHITECTURE.md)** | Desain monorepo terpadu (Vite + React 19 + Fastify + SQLite `better-sqlite3`), FIFO queue worker, dan alur API AI. |
 | 🔒 **[Spesifikasi Injeksi Metadata Biner](docs/METADATA_SPECIFICATION.md)** | Penjelasan teknis injektor biner 3-lapisan (*IPTC IIM 8BIM, EXIF IFD0 UCS-2, Adobe XMP*) murni tanpa `exiftool`/`sharp`. |
-| 📜 **[Riwayat Versi & Catatan Rilis (Changelog)](docs/VERSION_CHANGELOG.md)** | Catatan pembaruan dari `v1.0.0` hingga `v1.3.1`, saklar mode UI, dan panduan rollback Git Tag. |
+| 📜 **[Riwayat Versi & Catatan Rilis (Changelog)](docs/VERSION_CHANGELOG.md)** | Catatan pembaruan dari `v1.0.0` hingga `v2.0.0`, saklar mode UI, dan panduan rollback Git Tag. |
 
 ---
 
@@ -118,7 +118,7 @@ GPTIMAGEGENERATE/
 │   ├── USER_GUIDE.md           # Panduan pengguna langkah demi langkah
 │   ├── ARCHITECTURE.md         # Arsitektur sistem, Fastify & SQLite
 │   ├── METADATA_SPECIFICATION.md # Spesifikasi biner IPTC/EXIF/XMP
-│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v1.3.1 & rollback
+│   └── VERSION_CHANGELOG.md    # Riwayat rilis v1.0.0 s/d v2.0.0 & rollback
 ├── package.json                # Dependencies gabungan & npm scripts
 ├── vite.config.ts              # Konfigurasi Vite & API proxy ke Fastify (:3001)
 ├── data/                       # Direktori Data Lokal Disk
@@ -141,7 +141,7 @@ GPTIMAGEGENERATE/
 └── src/                        # Frontend React 19 + Vite
     ├── App.tsx                 # Main application layout, state & modals
     ├── components/
-    │   ├── Navbar.tsx          # Top bar, live kurs, profil author, badge versi v1.3.1
+    │   ├── Navbar.tsx          # Top bar, live kurs, profil author, badge versi v2.0.0
     │   ├── PromptInput.tsx     # Form ide, mode batch, & checklist B&W
     │   ├── KeywordExpanderWidget.tsx # AI Concept Expander (1-2 kata -> 5 ide subjek)
     │   ├── CostEstimationCard.tsx # Pra-estimasi token & biaya terpisah

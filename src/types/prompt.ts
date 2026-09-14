@@ -12,6 +12,25 @@ export interface StylePreset {
   promptSnippet: string;
 }
 
+export interface CommercialDirection {
+  id: string;
+  label: string;
+  tagline: string;
+  description: string;
+  iconName: string;
+  marketTrend2026: string;
+}
+
+export interface CompositionPreset {
+  id: string;
+  name: string;
+  tagline?: string;
+  description: string;
+  promptSnippet: string;
+  isIsolated: boolean;
+  iconName?: string;
+}
+
 export interface GeneratedImageVersion {
   version: number;
   imagePath: string; // e.g. "outputs/2026-09-10/img-1725940000000-0.png"
@@ -20,14 +39,39 @@ export interface GeneratedImageVersion {
   costUsd: number;   // e.g. 0.02
 }
 
+export interface CommercialBrief {
+  marketCategory: string;
+  targetBuyer: string;
+  primaryUseCases: string[];
+  commercialConcept: string;
+  visualHook: string;
+  differentiation: string;
+  searchIntent: string[];
+  compositionStrategy: string;
+  vectorStrategy: string;
+  risks: string[];
+  scores: {
+    commercial: number;        // Commercial Usefulness (1-10)
+    uniqueness: number;        // Visual Uniqueness (1-10)
+    searchability: number;     // Searchability & Demand (1-10)
+    vectorSuitability: number; // Vector Autotrace Suitability (1-10)
+    visualClarity: number;     // Visual Clarity & Readability (1-10)
+    overall: number;           // Composite Overall Score (1-10)
+  };
+  decision: 'PASS' | 'REWORK';
+}
+
 export interface PromptVersion {
   version: number;           // 1, 2, 3...
   title: string;             // Judul variasi sudut pandang
   optimizedPrompt: string;   // Teks prompt visual 2D
   negativePrompt?: string;   // Negative prompt
   vectorStyle?: string;      // Gaya vektor
+  commercialDirection?: string; // e.g. "Food & Beverage"
+  composition?: string;      // e.g. "single-isolated", "grouped-still-life"
   adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
   keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
+  commercialBrief?: CommercialBrief;
   inputTokens: number;       // Token input
   outputTokens: number;      // Token output
   promptCostUsd: string;     // Biaya prompt versi ini
@@ -42,9 +86,12 @@ export interface PromptItem {
   optimizedPrompt: string;
   negativePrompt?: string;
   vectorStyle?: string;
+  commercialDirection?: string;
+  composition?: string;
   colorPalette?: string;
   adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
   keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
+  commercialBrief?: CommercialBrief;
   targetEngine: TargetEngine;
   aspectRatio: string; // '1:1'
   stylePreset: string;
@@ -76,6 +123,26 @@ export interface PromptItem {
   
   isFavorite: boolean;
   createdAt: number;
+}
+
+export interface PromptExpansionResult {
+  title: string;
+  adobeStockTitle?: string;
+  keywords?: string[];
+  commercialDirection?: string;
+  composition?: string;
+  commercialBrief?: CommercialBrief;
+  optimizedPrompt: string;
+  negativePrompt?: string;
+  vectorStyle?: string;
+  colorPalette?: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    promptCostUsd: string;
+    promptCostIdr: string;
+  };
 }
 
 export interface PrePromptEstimate {

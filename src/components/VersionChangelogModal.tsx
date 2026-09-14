@@ -17,7 +17,7 @@ interface VersionChangelogModalProps {
   onEnableAllFeatures: () => void;
 }
 
-export const APP_VERSION = 'v1.3.1';
+const APP_VERSION = 'v2.0.0';
 
 export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
   isOpen,
@@ -51,7 +51,7 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-stone-300">
-                Pilih mode antarmuka (Klasik / Lengkap) atau tinjau catatan pembaruan.
+                Commercial Art Director &amp; 5-Tier Decision Engine Edition.
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
                       : 'bg-white text-stone-700 border-stone-300 hover:border-stone-900'
                   }`}
                 >
-                  Mode Lengkap (v1.3.0)
+                  Mode Lengkap (v2.0.0)
                 </button>
                 <button
                   type="button"
@@ -147,7 +147,7 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
                 <div className="space-y-0.5">
                   <div className="font-bold text-[11px]">Metadata &amp; SEO Title</div>
                   <p className="text-[10px] text-stone-500 font-sans leading-tight">
-                    Judul Adobe Stock 120 char &amp; injeksi metadata biner.
+                    Judul Adobe Stock 120 char &amp; 4-tier keywords.
                   </p>
                 </div>
               </label>
@@ -161,20 +161,52 @@ export const VersionChangelogModal: React.FC<VersionChangelogModalProps> = ({
               <span>Riwayat Rilis &amp; Catatan Pembaruan (Changelog)</span>
             </div>
 
-            {/* Version 1.3.1 */}
+            {/* Version 2.0.0 */}
             <div className="border border-stone-900 bg-white p-4 space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-stone-900 text-white text-xs font-bold">
-                    v1.3.1
+                    v2.0.0
                   </span>
                   <span className="text-xs font-bold text-stone-900">
-                    Premium Line Art Icon &amp; On-Demand SEO Generator
+                    Commercial Art Director &amp; 5-Tier Decision Engine
                   </span>
                 </div>
                 <span className="text-[10px] text-stone-500">September 2026</span>
               </div>
               <ul className="text-[11px] text-stone-700 space-y-1 font-sans list-disc list-inside">
+                <li>
+                  <strong>5-Tier Commercial Decision Architecture:</strong> Transformasi dari generator prompt menjadi Art Director Decision Engine terstruktur (<em>Idea → Direction → Concept → Style → Composition → Prompt</em>).
+                </li>
+                <li>
+                  <strong>10 Commercial Directions:</strong> Selector pilar tren microstock 2026 (<em>Evergreen Utility, Business &amp; Tech, Sustainability, Food &amp; Beverage, dll.</em>).
+                </li>
+                <li>
+                  <strong>5-Dimension Commercial Scoring &amp; Quality Gate:</strong> Evaluasi kelayakan komersial otomatis dengan status <code>PASS</code> (&ge;7.0) atau <code>REWORK</code> (&lt;7.0) yang menghemat biaya render gambar pada batch.
+                </li>
+                <li>
+                  <strong>5 Komposisi Mandiri &amp; Dynamic Isolation:</strong> Pemisahan gaya render dari komposisi spasial (<em>Isolated Object, Object Group, Minimal Context, Commercial Scene, Decorative</em>).
+                </li>
+                <li>
+                  <strong>Adobe Stock Official SEO Hierarchy &amp; 4-Tier Ranked Keywords:</strong> Judul faktual tanpa keyword stuffing dan 4 tier keywords terurut berdasarkan Search Intent prioritas 1-10.
+                </li>
+              </ul>
+            </div>
+
+            {/* Version 1.3.1 */}
+            <div className="border border-stone-200 bg-stone-50 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-stone-700 text-white text-xs font-bold">
+                    v1.3.1
+                  </span>
+                  <span className="text-xs font-bold text-stone-800">
+                    Premium Line Art Icon &amp; On-Demand SEO Generator
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500">September 2026</span>
+              </div>
+              <ul className="text-[11px] text-stone-600 space-y-1 font-sans list-disc list-inside">
                 <li>
                   <strong>Gaya ke-7 Premium Line Art Icon:</strong> Mandat mutlak zero-color fill, uncolored coloring-book interior, pure black outlines, dan simplifikasi siluet 85–90% untuk printable &amp; microstock SVG.
                 </li>

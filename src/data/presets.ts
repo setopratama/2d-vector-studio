@@ -1,5 +1,151 @@
 // src/data/presets.ts
-import { StylePreset, TargetEngine } from '../types/prompt';
+import { StylePreset, TargetEngine, CommercialDirection, CompositionPreset } from '../types/prompt';
+
+export const COMPOSITION_PRESETS: CompositionPreset[] = [
+  {
+    id: 'isolated-object',
+    name: 'Isolated Object',
+    tagline: 'Asset Terisolasi White BG',
+    description: 'Satu objek utama terpusat, siluet batas tegas, zero clutter, siap autotrace SVG & icon',
+    promptSnippet: 'single centered isolated subject, clear negative space framing, pristine outer boundary silhouette, zero background clutter, isolated on solid pure white background',
+    isIsolated: true,
+    iconName: 'Maximize2',
+  },
+  {
+    id: 'object-group',
+    name: 'Object Group',
+    tagline: 'Grouped Still Life / Set',
+    description: 'Rangkaian 2–3 objek komplementer yang tersusun harmonis dengan separasi jelas',
+    promptSnippet: 'balanced grouped arrangement of related objects, compact still life composition, distinct silhouette separations, clean visual hierarchy, isolated on solid pure white background',
+    isIsolated: true,
+    iconName: 'Layers',
+  },
+  {
+    id: 'minimal-context',
+    name: 'Minimal Context',
+    tagline: 'Subjek + Grounding Aksen',
+    description: 'Subjek utama dengan elemen pijakan atau aksen pendukung minimalis tanpa mengaburkan fokus subjek',
+    promptSnippet: 'central subject with subtle minimalist contextual grounding, clean vector props, restrained negative space, balanced geometric environment accents',
+    isIsolated: false,
+    iconName: 'Sparkles',
+  },
+  {
+    id: 'commercial-scene',
+    name: 'Commercial Scene',
+    tagline: 'Scene Vektor Komersial Utuh',
+    description: 'Scene vektor kontekstual komersial utuh (interior modern, workspace, smart home, aktivitas urban) untuk web hero & editorial',
+    promptSnippet: 'full 2D commercial vector scene, flat architectural environment, modern interior or workspace setting, layered flat shapes, balanced editorial vector illustration',
+    isIsolated: false,
+    iconName: 'Layout',
+  },
+  {
+    id: 'decorative-composition',
+    name: 'Decorative Composition',
+    tagline: 'Emblem, Frame & Border',
+    description: 'Komposisi dekoratif simetris atau berbingkai cincin geometris, badge/crest stempel retro, border ornamen',
+    promptSnippet: 'symmetrical decorative vector composition, circular emblem crest framing, clean ornamental geometric border, balanced vintage badge layout',
+    isIsolated: true,
+    iconName: 'Award',
+  },
+];
+
+// Helper to resolve composition preset by ID with legacy backwards compatibility
+export function resolveCompositionPreset(id?: string): CompositionPreset {
+  if (!id) return COMPOSITION_PRESETS[0];
+  const exact = COMPOSITION_PRESETS.find((c) => c.id === id);
+  if (exact) return exact;
+
+  // Legacy mappings
+  if (id === 'single-isolated') return COMPOSITION_PRESETS[0]; // isolated-object
+  if (id === 'grouped-still-life' || id === 'mini-icon-set') return COMPOSITION_PRESETS[1]; // object-group
+  if (id === 'hero-with-accents' || id === 'dynamic-diagonal') return COMPOSITION_PRESETS[2]; // minimal-context
+  if (id === 'circular-badge') return COMPOSITION_PRESETS[4]; // decorative-composition
+
+  return COMPOSITION_PRESETS[0];
+}
+
+export const COMMERCIAL_DIRECTIONS: CommercialDirection[] = [
+  {
+    id: 'evergreen-utility',
+    label: 'Evergreen Utility',
+    tagline: 'Simbol & Navigasi Esensial',
+    description: 'Kebutuhan esensial sehari-hari, navigasi UI, signage, dan simbol universal dengan penjualan stabil sepanjang tahun.',
+    iconName: 'Compass',
+    marketTrend2026: 'Universal Utility & Core Icons',
+  },
+  {
+    id: 'business-tech',
+    label: 'Business & Technology',
+    tagline: 'FinTech, AI & Workspace',
+    description: 'FinTech, modern workspace, cloud computing, AI visual concept, dan produktivitas digital.',
+    iconName: 'Cpu',
+    marketTrend2026: 'Connectioneering & Next-Gen Enterprise',
+  },
+  {
+    id: 'wellness-lifestyle',
+    label: 'Wellness & Lifestyle',
+    tagline: 'Mindful, Self-Care & Kebugaran',
+    description: 'Kesehatan mental, yoga, mindful living, nutrisi seimbang, ketenangan batin, dan kebugaran holistik.',
+    iconName: 'HeartPulse',
+    marketTrend2026: 'Mindful Balance & Human Vitality',
+  },
+  {
+    id: 'sustainability',
+    label: 'Sustainability & Eco',
+    tagline: 'Zero Waste & Energi Hijau',
+    description: 'Energi terbarukan, zero waste, daur ulang, ekologi hijau, perlindungan satwa, dan climate action.',
+    iconName: 'Leaf',
+    marketTrend2026: 'Circular Economy & Climate Tech',
+  },
+  {
+    id: 'education-learning',
+    label: 'Education & Science',
+    tagline: 'STEM, Worksheet & Infografis',
+    description: 'Edukasi STEM, e-learning, printable worksheet anak, laboratorium sains, dan infografis akademis.',
+    iconName: 'GraduationCap',
+    marketTrend2026: 'Visual STEM & Micro-Learning Assets',
+  },
+  {
+    id: 'food-beverage',
+    label: 'Food & Beverage',
+    tagline: 'Kafe, Kuliner & Packaging',
+    description: 'Specialty coffee, bakery artisanal, menu restoran, kemasan makanan, dan merchandising kuliner.',
+    iconName: 'UtensilsCrossed',
+    marketTrend2026: 'Artisanal Gastronomy & Craft F&B',
+  },
+  {
+    id: 'seasonal-holidays',
+    label: 'Seasonal & Holidays',
+    tagline: 'Event Kalender & Perayaan',
+    description: 'Event musiman kalender global (Ramadhan, Natal, New Year, Halloween, Spring/Summer campaign).',
+    iconName: 'CalendarDays',
+    marketTrend2026: 'High-Spike Seasonal Event Campaigns',
+  },
+  {
+    id: 'local-cultural',
+    label: 'Local & Cultural',
+    tagline: 'Tradisi, Etnik & Pariwisata',
+    description: 'Warisan budaya lokal, seni tradisi, kerajinan tangan khas, motif etnik, dan destinasi wisata otentik.',
+    iconName: 'MapPin',
+    marketTrend2026: 'Local Flavor & Cultural Identity',
+  },
+  {
+    id: 'emotional-human',
+    label: 'Emotional / Human',
+    tagline: 'Empati, Komunitas & Ekspresi',
+    description: 'Hubungan antarmanusia, empati sosial, kehangatan keluarga, ekspresi emosional mendalam.',
+    iconName: 'Smile',
+    marketTrend2026: 'All the Feels & Empathetic Storytelling',
+  },
+  {
+    id: 'playful-surreal',
+    label: 'Playful / Surreal',
+    tagline: 'Humor Visual & Eksentrik',
+    description: 'Humor visual segar, maskot pop-art eksentrik, ilustrasi absurd jenaka, dan karakter penuh imajinasi.',
+    iconName: 'Sparkles',
+    marketTrend2026: 'Surreal Silliness & Dopamine Pop',
+  },
+];
 
 export const STYLE_PRESETS: StylePreset[] = [
   {

@@ -46,11 +46,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   type="button"
                   onClick={onOpenVersionModal}
-                  title="Lihat Catatan Rilis Versi & Pengaturan Mode (v1.3.1)"
+                  title="Lihat Catatan Rilis Versi & Pengaturan Mode (v2.0.0)"
                   className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 border border-stone-400 bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-700 transition-colors font-bold cursor-pointer flex items-center gap-1"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>v1.3.1</span>
+                  <span>v2.0.0</span>
                 </button>
               </div>
               <p className="text-[11px] text-stone-500 font-mono tracking-wide hidden sm:block">

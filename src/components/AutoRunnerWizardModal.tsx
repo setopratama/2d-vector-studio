@@ -1,7 +1,6 @@
-// src/components/AutoRunnerWizardModal.tsx
 import React, { useState } from 'react';
 import { PromptItem, TargetEngine } from '../types/prompt';
-import { STYLE_PRESETS, SAMPLE_IDEAS } from '../data/presets';
+import { STYLE_PRESETS, SAMPLE_IDEAS, COMMERCIAL_DIRECTIONS, COMPOSITION_PRESETS } from '../data/presets';
 import { PRICING_CONFIG, formatUsd, formatIdr, estimateTextTokens } from '../utils/costCalculator';
 import { useAutoRunner, RunnerStatus, RunnerPhase } from '../hooks/useAutoRunner';
 import {
@@ -23,7 +22,9 @@ import {
   ArrowLeft,
   Copy,
   Check,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Compass,
+  Layout
 } from 'lucide-react';
 
 import { ContributorProfile } from '../hooks/useContributorProfile';
@@ -47,9 +48,12 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [rawIdea, setRawIdea] = useState('maskot rubah mekanik');
   const [selectedPreset, setSelectedPreset] = useState('flat-vector');
+  const [selectedCommercialDirection, setSelectedCommercialDirection] = useState('evergreen-utility');
+  const [selectedComposition, setSelectedComposition] = useState('isolated-object');
   const [isBlackAndWhite, setIsBlackAndWhite] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [targetQuantity, setTargetQuantity] = useState<number>(10);
+  const [qualityGateEnabled, setQualityGateEnabled] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const {
@@ -90,9 +94,12 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
     startRunner({
       rawIdea,
       selectedPreset,
+      commercialDirection: selectedCommercialDirection,
+      composition: selectedComposition,
       isBlackAndWhite,
       includeMetadata,
       targetQuantity,
+      qualityGateEnabled,
       selectedEngine: 'gpt-image',
       onItemComplete: (item) => {
         if (onItemsGenerated) {
@@ -276,10 +283,49 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
                 </div>
               </div>
 
+              {/* Commercial Direction Pillar Selector */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 font-mono flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-stone-900" />
+                    <span>2. Pilih Commercial Direction (Pilar Pasar Microstock 2026)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-stone-500 uppercase">
+                    Decision-First Engine
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {COMMERCIAL_DIRECTIONS.map((dir) => {
+                    const isSelected = selectedCommercialDirection === dir.id;
+                    return (
+                      <button
+                        key={dir.id}
+                        type="button"
+                        onClick={() => setSelectedCommercialDirection(dir.id)}
+                        className={`p-2.5 text-left border transition-all text-xs font-mono flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-stone-900 text-white border-stone-900 shadow-sm ring-2 ring-stone-900'
+                            : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'
+                        }`}
+                      >
+                        <div className="font-bold text-[11px] truncate">{dir.label}</div>
+                        <div
+                          className={`text-[9px] mt-1 line-clamp-2 ${
+                            isSelected ? 'text-stone-300' : 'text-stone-500'
+                          }`}
+                        >
+                          {dir.tagline}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Vector Style Presets Grid */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 font-mono">
-                  2. Pilih Gaya Grafis 2D Siap Vektor (Terkunci 100% Konsisten)
+                  3. Pilih Gaya Grafis 2D Siap Vektor (Terkunci 100% Konsisten)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                   {STYLE_PRESETS.map((preset) => {
@@ -313,6 +359,60 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
                           >
                             {preset.description}
                           </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Composition Strategy Grid */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 font-mono flex items-center gap-1.5">
+                    <Layout className="w-3.5 h-3.5 text-stone-900" />
+                    <span>4. Pilih Composition Strategy (Penataan Ruang Visual)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-stone-500 uppercase">
+                    Isolated vs Contextual Scene
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                  {COMPOSITION_PRESETS.map((comp) => {
+                    const isSelected = selectedComposition === comp.id || (selectedComposition === 'single-isolated' && comp.id === 'isolated-object');
+                    return (
+                      <button
+                        key={comp.id}
+                        type="button"
+                        onClick={() => setSelectedComposition(comp.id)}
+                        className={`p-2.5 text-left border transition-all text-xs font-mono flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-stone-900 text-white border-stone-900 ring-2 ring-stone-900 shadow-sm'
+                            : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="font-bold text-[11px] truncate">{comp.name}</div>
+                          <span
+                            className={`text-[8px] font-mono uppercase px-1 py-0.2 font-bold ${
+                              comp.isIsolated
+                                ? isSelected
+                                  ? 'bg-stone-800 text-emerald-300'
+                                  : 'bg-stone-200 text-stone-600'
+                                : isSelected
+                                ? 'bg-amber-400 text-stone-950'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {comp.isIsolated ? 'White BG' : 'Scene'}
+                          </span>
+                        </div>
+                        <div
+                          className={`text-[9px] line-clamp-2 ${
+                            isSelected ? 'text-stone-300' : 'text-stone-500'
+                          }`}
+                        >
+                          {comp.description}
                         </div>
                       </button>
                     );
@@ -516,6 +616,43 @@ export const AutoRunnerWizardModal: React.FC<AutoRunnerWizardModalProps> = ({
                 </div>
                 <div className="text-stone-600">
                   • Mode Warna: <span className="text-stone-900 font-semibold">{isBlackAndWhite ? 'Hitam Putih (Pure B&W)' : 'Flat Color Blocking'}</span>
+                </div>
+              </div>
+
+              {/* Commercial Quality Gate Toggle Card */}
+              <div
+                onClick={() => setQualityGateEnabled(!qualityGateEnabled)}
+                className={`border p-3.5 cursor-pointer transition-all select-none flex items-start gap-3 ${
+                  qualityGateEnabled
+                    ? 'bg-emerald-50 text-stone-900 border-emerald-500 ring-1 ring-emerald-400'
+                    : 'bg-stone-50 text-stone-800 border-stone-300 hover:border-stone-500'
+                }`}
+              >
+                <div className="mt-0.5 shrink-0">
+                  {qualityGateEnabled ? (
+                    <CheckSquare className="w-4 h-4 text-emerald-700" />
+                  ) : (
+                    <Square className="w-4 h-4 text-stone-400" />
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider font-mono text-emerald-950">
+                      Commercial Quality Gate (Hemat Biaya Render)
+                    </span>
+                    <span
+                      className={`text-[9px] font-mono uppercase px-1.5 py-0.2 font-bold ${
+                        qualityGateEnabled ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-700'
+                      }`}
+                    >
+                      {qualityGateEnabled ? 'Proteksi Aktif' : 'Non-Aktif'}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] ${qualityGateEnabled ? 'text-emerald-900' : 'text-stone-500'}`}>
+                    {qualityGateEnabled
+                      ? 'Otomatis melewati (skip) render gambar ($0.020 / ~Rp 320) jika konsep AI mendapat skor < 7.0 (REWORK). Mencegah pemborosan kuota pada aset yang kurang layak jual.'
+                      : 'Merender gambar untuk semua konsep tanpa memedulikan skor evaluasi komersial.'}
+                  </p>
                 </div>
               </div>
 

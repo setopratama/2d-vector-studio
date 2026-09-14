@@ -21,7 +21,7 @@ interface BatchCardsGridProps {
     taskType: string | null;
   };
   onGenerateImageForPrompt: (promptId: string) => void;
-  onGenerateAllBatchImages: () => void;
+  onGenerateAllBatchImages: (onlyPass?: boolean) => void;
   onRegenerateImage: (promptId: string) => void;
   onRegeneratePrompt?: (promptId: string) => void;
   onGenerateSeoMetadata?: (promptId: string) => void;
@@ -55,7 +55,15 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
 
   const totalCards = promptItems.length;
   const itemsWithImages = promptItems.filter((p) => p.images.length > 0);
-  const ungeneratedCount = totalCards - itemsWithImages.length;
+  const ungeneratedItems = promptItems.filter((p) => p.images.length === 0);
+  const ungeneratedCount = ungeneratedItems.length;
+  const ungeneratedPassCount = ungeneratedItems.filter(
+    (p) => p.commercialBrief?.decision === 'PASS'
+  ).length;
+  const ungeneratedReworkCount = ungeneratedItems.filter(
+    (p) => p.commercialBrief?.decision === 'REWORK'
+  ).length;
+
   const isQueueActive = taskQueue.length > 0;
 
   const imageTariffUsd = PRICING_CONFIG.IMAGE_FLAT_COST_PER_UNIT_USD;
@@ -107,18 +115,44 @@ export const BatchCardsGrid: React.FC<BatchCardsGridProps> = ({
 
           {/* Master Batch Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Generate All Batch Visuals */}
+            {/* Generate Batch Visuals: Quality Gate PASS only vs All */}
             {ungeneratedCount > 0 && (
-              <button
-                onClick={onGenerateAllBatchImages}
-                disabled={isQueueActive}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>
-                  ⚡ Render Semua {ungeneratedCount} Gambar ({formatUsd(ungeneratedCount * imageTariffUsd, 3)})
-                </span>
-              </button>
+              <>
+                {ungeneratedReworkCount > 0 && ungeneratedPassCount > 0 ? (
+                  <>
+                    <button
+                      onClick={() => onGenerateAllBatchImages(true)}
+                      disabled={isQueueActive}
+                      title={`Hanya render ${ungeneratedPassCount} card yang PASS Quality Gate (hemat ${formatUsd(ungeneratedReworkCount * imageTariffUsd, 3)})`}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>
+                        ⚡ Render {ungeneratedPassCount} PASS ({formatUsd(ungeneratedPassCount * imageTariffUsd, 3)})
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => onGenerateAllBatchImages(false)}
+                      disabled={isQueueActive}
+                      title={`Render seluruh ${ungeneratedCount} gambar termasuk yang bertanda REWORK`}
+                      className="px-3 py-2.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-50 text-stone-800 border border-stone-400 font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
+                    >
+                      <span>Semua ({ungeneratedCount})</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => onGenerateAllBatchImages(false)}
+                    disabled={isQueueActive}
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:translate-y-[1px]"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>
+                      ⚡ Render Semua {ungeneratedCount} Gambar ({formatUsd(ungeneratedCount * imageTariffUsd, 3)})
+                    </span>
+                  </button>
+                )}
+              </>
             )}
 
             {/* Download All Generated Images */}
