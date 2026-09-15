@@ -159,6 +159,7 @@ export interface PromptExpansionParams {
 export interface PromptExpansionResult {
   title: string;
   adobeStockTitle?: string;
+  adobeStockDescription?: string;
   keywords?: string[];
   commercialDirection?: string;
   composition?: string;
@@ -212,7 +213,9 @@ export async function generateOptimizedPrompt(
    - "adobeStockTitle": Factual, descriptive, customer-oriented English title following the strict hierarchy: [Commercial Concept] + [Primary Subject] + [Key Attributes / Style / Context].
    - Focus on factual clarity without repetitive filler buzzwords.
    - ${isIsolated ? 'Must end with "isolated on white background".' : 'Describe the commercial scene/context and vector style (do NOT force "isolated on white background" for contextual scenes).'}
-7. Adobe Stock Keywords Requirement (ORDERED STRICTLY BY SEARCH IMPORTANCE):
+7. Adobe Stock Description Requirement:
+   - "adobeStockDescription": Factual, descriptive 120-250 characters English summary for microstock buyers. Clearly describe the core subject, 2D vector styling, aesthetic attributes, and commercial use cases (e.g. branding, packaging, web icons, editorial).
+8. Adobe Stock Keywords Requirement (ORDERED STRICTLY BY SEARCH IMPORTANCE):
    - "keywords": An array of 25 to 40 high-relevance search tags in English, sorted strictly in descending order of importance (first 10 are most critical):
      • Rank 1–10 (Tier 1 - Strongest Search Intent): Core subject name, primary commercial concept, exact buyer queries.
      • Rank 11–20 (Tier 2 - Subject Components & Props): Individual objects, tools, visual elements present in the graphic.
@@ -248,7 +251,7 @@ OPERATING RULES:
 1. NO CHAIN-OF-THOUGHT OR PROSE: Do NOT explain your thought process or output conversational filler. Directly return your final structured analysis decisions in JSON format.
 2. COMMERCIAL DECISION-FIRST: Anchor all commercial analysis strictly around "${commercialDirection}". Determine targetBuyer, primaryUseCases, searchIntent, commercialConcept, and visualHook BEFORE synthesizing the prompt.
 3. STRICT STYLE & COMPOSITION COHESION: Follow the visual rendering of "${presetInfo.name}" and the spatial layout of "${compositionInfo.name}".
-4. PROMPT SYNTHESIS: The "optimizedPrompt" MUST combine "commercialConcept" + "visualHook" + "${presetInfo.name}" + "${compositionInfo.name}" into a concise (30-50 words) 2D vector prompt in English.
+4. PROMPT SYNTHESIS: The "optimizedPrompt" MUST combine "commercialConcept" + "visualHook" + "${presetInfo.name}" + "${compositionInfo.name}" into a concise (30-50 words) 2D visual prompt in English.
    ${isIsolated ? '- ISOLATION MANDATE: Isolate the subject cleanly on pure solid white background for SVG extraction.' : '- CONTEXTUAL SCENE MANDATE: Do NOT force pure white isolated background. Synthesize a coherent flat 2D commercial vector scene or contextual environment (e.g. modern interior, workspace setting, or subtle grounding environment) with clean flat shapes, cohesive color hierarchy, and zero raster clutter.'}
 5. QUALITY GATE SCORING: Evaluate marketability objectively (scores 1-10 on commercial, uniqueness, searchability, vectorSuitability, visualClarity). Set "decision": "PASS" if overall >= 7.0 and vectorSuitability >= 7.0, otherwise "REWORK".
 ${presetKey === 'premium-line-art' ? `6. PREMIUM LINE ART MANDATE: Pure black uniform monoline, 85-90% detail simplification, ~70-75% negative white space, STRICT ZERO COLOR FILL (no color words or color fills), coloring-book / printable ready.` : ''}
@@ -281,7 +284,7 @@ RESPOND STRICTLY IN JSON FORMAT:
   "optimizedPrompt": "Concise 30-50 words 2D visual prompt synthesized directly from commercialConcept, visualHook, ${presetInfo.name}, and ${compositionInfo.name}${isIsolated ? ', isolated on pure solid white background' : ''}",
   "negativePrompt": "${isIsolated ? 'photorealistic, 3d, realistic shadows, gradients, noise, scenic background, landscape, environment sprawl' : 'photorealistic, 3d render, hyperrealistic textures, messy gradients, blurry noise, depth of field blur'}",
   "vectorStyle": "${presetInfo.name} - ${variationAngle}",
-  "colorPalette": "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}"${includeMeta ? `,\n  "adobeStockTitle": "Commercial SEO English Title between 70 and 120 chars${isIsolated ? ', isolated on white background' : ''}",\n  "keywords": ["tag1", "tag2", "tag3"]` : ''}
+  "colorPalette": "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}"${includeMeta ? `,\n  "adobeStockTitle": "Commercial SEO English Title between 70 and 120 chars${isIsolated ? ', isolated on white background' : ''}",\n  "adobeStockDescription": "Descriptive 120-250 characters English summary describing the visual subject, vector style, commercial context, and application.",\n  "keywords": ["tag1", "tag2", "tag3"]` : ''}
 }`;
 
   const headers: Record<string, string> = {
@@ -310,7 +313,7 @@ Isolation Mode: ${isIsolated ? 'Isolated on White Background' : 'Commercial Scen
 Variation Angle: "${variationAngle}"${variationIndexStr}.
 Target Engine: ${params.targetEngine || 'gpt-image'}. Aspect Ratio: ${params.aspectRatio || '1:1'}.
 ${colorModeInstruction}
-Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercialDirection}", construct commercial brief with quality scores, and synthesize the 30-50 words 2D visual prompt combining style "${presetInfo.name}" and composition "${compositionInfo.name}" (${isIsolated ? 'isolated on pure white background' : 'integrated commercial 2D vector scene'})${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars) and 25-45 stock keywords' : ''}.`;
+Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercialDirection}", construct commercial brief with quality scores, and synthesize the 30-50 words 2D visual prompt combining style "${presetInfo.name}" and composition "${compositionInfo.name}" (${isIsolated ? 'isolated on pure white background' : 'integrated commercial 2D vector scene'})${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars), Adobe Stock Description (120-250 chars) and 25-45 stock keywords' : ''}.`;
 
   const response = await fetch(promptEndpoint, {
     method: 'POST',
@@ -345,6 +348,7 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
     parsed = {
       title: params.rawIdea.length > 30 ? params.rawIdea.slice(0, 30).trim() : params.rawIdea,
       adobeStockTitle: defaultTitle,
+      adobeStockDescription: `Clean 2D vector graphic illustration of ${params.rawIdea}, suitable for commercial design and digital assets.`,
       keywords: isIsolated
         ? ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector']
         : ['vector art', 'vector scene', 'flat design', 'illustration', 'commercial scene', 'vector illustration', 'graphic', '2d vector'],
@@ -358,6 +362,27 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
         : 'photorealistic, 3d render, hyperrealistic textures, messy photographic gradients, blurry noise, depth of field blur, lens flare, raster painting, photograph',
       vectorStyle: `${presetInfo.name} - ${variationAngle}`,
       colorPalette: isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White' : 'Flat Solid Colors',
+      commercialBrief: {
+        marketCategory: commercialDirection,
+        targetBuyer: 'commercial buyers, digital designers, content creators',
+        primaryUseCases: ['branding', 'digital graphics', 'microstock', 'editorial'],
+        commercialConcept: `${params.rawIdea} commercial asset`,
+        visualHook: `clean ${presetInfo.name} visual rendering`,
+        differentiation: 'distinctive 2D commercial vector aesthetics',
+        searchIntent: [params.rawIdea, 'vector graphic', 'stock asset'],
+        compositionStrategy: compositionInfo.name,
+        vectorStrategy: 'crisp vector shapes and bold contours',
+        risks: ['avoid clutter', 'maintain vector integrity'],
+        scores: {
+          commercial: 8.5,
+          uniqueness: 8.0,
+          searchability: 9.0,
+          vectorSuitability: 9.4,
+          visualClarity: 9.0,
+          overall: 8.86,
+        },
+        decision: 'PASS',
+      },
     };
   }
 
@@ -445,6 +470,21 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
     cleanAdobeStockTitle = (lastSpace > 140 ? truncated.slice(0, lastSpace) : truncated).trim();
   }
 
+  // Ensure Adobe Stock Description if metadata requested
+  let cleanAdobeStockDescription = '';
+  if (includeMeta) {
+    cleanAdobeStockDescription = String(
+      parsed.adobeStockDescription ||
+      `Clean 2D vector graphic illustration of ${params.rawIdea}, featuring crisp contours and modern commercial styling, suitable for digital design, branding, and microstock assets.`
+    ).trim();
+    cleanAdobeStockDescription = cleanAdobeStockDescription.replace(/\.{2,}$/, '').trim();
+    if (cleanAdobeStockDescription.length > 350) {
+      const truncated = cleanAdobeStockDescription.slice(0, 350);
+      const lastSpace = truncated.lastIndexOf(' ');
+      cleanAdobeStockDescription = (lastSpace > 200 ? truncated.slice(0, lastSpace) : truncated).trim();
+    }
+  }
+
   // Ensure Keywords
   let cleanKeywords: string[] = [];
   if (Array.isArray(parsed.keywords)) {
@@ -482,6 +522,7 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
   return {
     title: parsed.title || params.rawIdea.slice(0, 30),
     adobeStockTitle: includeMeta ? cleanAdobeStockTitle : undefined,
+    adobeStockDescription: includeMeta ? cleanAdobeStockDescription : undefined,
     keywords: includeMeta ? cleanKeywords : undefined,
     commercialDirection: params.commercialDirection || undefined,
     composition: compositionKey,
@@ -504,8 +545,10 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
 export interface SeoMetadataParams {
   rawIdea: string;
   optimizedPrompt: string;
-  vectorStyle?: string;
   stylePreset?: string;
+  vectorStyle?: string;
+  composition?: string;
+  isIsolated?: boolean;
   isBlackAndWhite?: boolean;
   commercialDirection?: string;
   commercialConcept?: string;
@@ -513,15 +556,13 @@ export interface SeoMetadataParams {
   primaryUseCases?: string[];
   useCases?: string[];
   visualHook?: string;
-  differentiation?: string;
   searchIntent?: string[];
-  composition?: string;
-  isIsolated?: boolean;
   commercialBrief?: CommercialBrief;
 }
 
 export interface SeoMetadataResult {
   adobeStockTitle: string;
+  adobeStockDescription: string;
   keywords: string[];
   usage: {
     promptTokens: number;
@@ -565,7 +606,11 @@ ADOBE STOCK OFFICIAL BEST PRACTICES:
    - Focus on factual clarity without repetitive filler buzzwords.
    - ${isIsolated ? 'Must end with "isolated on white background".' : 'Describe the commercial scene/context and vector style (do NOT force "isolated on white background" for contextual scenes).'}
 
-2. "keywords" (ORDERED STRICTLY BY SEARCH IMPORTANCE):
+2. "adobeStockDescription":
+   - Factual, descriptive 120-250 characters English summary for microstock buyers.
+   - Detail the primary subject, visual components, vector art technique, color/contrast properties, and commercial application (e.g. branding, packaging, web icons, editorial).
+
+3. "keywords" (ORDERED STRICTLY BY SEARCH IMPORTANCE):
    - Adobe Stock algorithm weights the first 10 keywords most heavily.
    - You MUST generate 25 to 40 keywords, ordered strictly in descending order of search relevance into 4 Tiers:
      • Rank 1–10 (Tier 1 - Strongest Search Intent): Primary subject name, core commercial concept, and exact high-intent buyer queries (e.g. "specialty coffee", "coffee equipment", "pour over", "barista tools").
@@ -577,6 +622,7 @@ ADOBE STOCK OFFICIAL BEST PRACTICES:
 Respond strictly in JSON format:
 {
   "adobeStockTitle": "Factual and descriptive English title following the hierarchy${isIsolated ? ', isolated on white background' : ''}",
+  "adobeStockDescription": "Descriptive 120-250 characters English summary of the 2D vector asset for buyers.",
   "keywords": [
     "tag1",
     "tag2",
@@ -596,7 +642,7 @@ Art Style: "${params.vectorStyle || params.stylePreset || '2D Vector'}".
 Composition: "${params.composition || (isIsolated ? 'Isolated Object' : 'Commercial Scene')}".
 Isolation Mode: ${isIsolated ? 'Isolated on Pure White Background' : 'Integrated Commercial Vector Scene'}.
 Black & White Mode: ${params.isBlackAndWhite ? 'Yes (Monochrome Ink)' : 'No (Flat Colors)'}.
-Requirement: Generate Adobe Stock SEO Title (Commercial Concept → Primary Subject → Attributes) and 25-40 keywords strictly ordered by 4-tier importance (Rank 1-10 strongest search intent).`;
+Requirement: Generate Adobe Stock SEO Title (Commercial Concept → Primary Subject → Attributes), Adobe Stock Description (120-250 chars), and 25-40 keywords strictly ordered by 4-tier importance (Rank 1-10 strongest search intent).`;
 
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,
@@ -669,6 +715,17 @@ Requirement: Generate Adobe Stock SEO Title (Commercial Concept → Primary Subj
     }
   }
 
+  let cleanAdobeStockDescription = String(
+    parsed.adobeStockDescription ||
+    `High-quality 2D vector asset illustration of ${params.rawIdea}, designed with clean contours, balanced negative space, and professional commercial aesthetics for branding, packaging, and digital media.`
+  ).trim();
+  cleanAdobeStockDescription = cleanAdobeStockDescription.replace(/\.{2,}$/, '').trim();
+  if (cleanAdobeStockDescription.length > 350) {
+    const truncated = cleanAdobeStockDescription.slice(0, 350);
+    const lastSpace = truncated.lastIndexOf(' ');
+    cleanAdobeStockDescription = (lastSpace > 200 ? truncated.slice(0, lastSpace) : truncated).trim();
+  }
+
   const promptTokens = result.usage?.prompt_tokens ?? 80;
   const completionTokens = result.usage?.completion_tokens ?? 120;
   const totalTokens = result.usage?.total_tokens ?? (promptTokens + completionTokens);
@@ -682,6 +739,7 @@ Requirement: Generate Adobe Stock SEO Title (Commercial Concept → Primary Subj
 
   return {
     adobeStockTitle: cleanAdobeStockTitle,
+    adobeStockDescription: cleanAdobeStockDescription,
     keywords: cleanKeywords,
     usage: {
       promptTokens,

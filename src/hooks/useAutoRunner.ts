@@ -118,6 +118,7 @@ export function useAutoRunner() {
       let promptCostIdr = formatIdr(parseFloat(promptCostUsd) * PRICING_CONFIG.USD_TO_IDR_RATE);
 
       let adobeStockTitle = `${rawIdea.trim()} 2D Vector Illustration Icon Isolated on White Background`;
+      let adobeStockDescription = `Clean 2D vector graphic illustration of ${rawIdea.trim()}, featuring crisp contours and commercial aesthetics for digital design and branding.`;
       let keywords: string[] = [
         ...rawIdea.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
         'vector', 'illustration', 'icon', 'graphic', 'design', 'flat design',
@@ -150,6 +151,7 @@ export function useAutoRunner() {
             if (aiData.title) title = `${aiData.title} [#${i + 1}]`;
             if (aiData.commercialBrief) commercialBrief = aiData.commercialBrief;
             if (aiData.adobeStockTitle) adobeStockTitle = aiData.adobeStockTitle;
+            if (aiData.adobeStockDescription) adobeStockDescription = aiData.adobeStockDescription;
             if (Array.isArray(aiData.keywords) && aiData.keywords.length > 0) keywords = aiData.keywords;
             if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
             if (aiData.vectorStyle) vectorStyle = aiData.vectorStyle;
@@ -194,6 +196,7 @@ export function useAutoRunner() {
           batchId,
           title,
           adobeStockTitle,
+          adobeStockDescription,
           keywords,
           commercialBrief,
           commercialDirection: config.commercialDirection,
@@ -290,6 +293,7 @@ export function useAutoRunner() {
         batchId,
         title,
         adobeStockTitle,
+        adobeStockDescription,
         keywords,
         commercialBrief,
         commercialDirection: config.commercialDirection,

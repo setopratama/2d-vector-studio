@@ -1,6 +1,6 @@
 # Dokumentasi Resmi: Commercial Art Director & 2D Vector Studio
 
-Selamat datang di pusat dokumentasi resmi **Commercial Art Director & 2D Vector-Ready Studio** (Versi `v2.0.0`).
+Selamat datang di pusat dokumentasi resmi **Commercial Art Director & 2D Vector-Ready Studio** (Versi `v2.0.1`).
 
 Aplikasi ini adalah studio generator prompt dan visual 2D siap-vektor mandiri (*self-hosted / local-first*) dengan **Arsitektur 5-Tier Commercial Decision**, sistem kalkulasi token & biaya transparan, 5-Dimension Commercial Scoring Quality Gate, injektor metadata biner 3-lapisan tanpa dependensi luar, optimasi SEO microstock (Adobe Stock / Shutterstock / Freepik), dan pipeline otomasi batch.
 
@@ -12,8 +12,8 @@ Aplikasi ini adalah studio generator prompt dan visual 2D siap-vektor mandiri (*
 |---|---|---|
 | **1. Panduan Pengguna (*User Guide*)** | Panduan alur kerja dari Commercial Direction, AI Concept Expander, konfigurasi 7 gaya 2D, saklar metadata opsional & generate SEO on-demand per kartu, checklist profil kontributor, hingga ekspor aset ber-metadata dengan penamaan bersih. | [USER_GUIDE.md](file:///D:/GPTIMAGEGENERATE/docs/USER_GUIDE.md) |
 | **2. Arsitektur Sistem (*Architecture & Tech Stack*)** | Desain monorepo terpadu (Vite + React 19 + Fastify + SQLite lokal via `better-sqlite3` & Drizzle ORM), antrean FIFO queue worker, auto-migration database, dan alur integrasi OpenRouter API. | [ARCHITECTURE.md](file:///D:/GPTIMAGEGENERATE/docs/ARCHITECTURE.md) |
-| **3. Spesifikasi Injeksi Metadata Biner (*Metadata Specification*)** | Dokumentasi teknis injektor biner 3-layer murni (IPTC IIM 8BIM APP13, EXIF IFD0 Windows XP UCS-2, Adobe XMP) standar agensi microstock dengan sinkronisasi Title & Description ke Adobe Stock SEO Title. | [METADATA_SPECIFICATION.md](file:///D:/GPTIMAGEGENERATE/docs/METADATA_SPECIFICATION.md) |
-| **4. Riwayat Versi & Catatan Rilis (*Version Changelog*)** | Riwayat evolusi rilis aplikasi (`v1.0.0` s/d `v2.0.0`), daftar fitur baru per versi, penambahan gaya Premium Line Art Icon, saklar mode UI, dan panduan rollback Git Tag. | [VERSION_CHANGELOG.md](file:///D:/GPTIMAGEGENERATE/docs/VERSION_CHANGELOG.md) |
+| **3. Spesifikasi Injeksi Metadata Biner (*Metadata Specification*)** | Dokumentasi teknis injektor biner 3-layer murni (IPTC IIM 8BIM APP13, EXIF IFD0 Windows XP UCS-2, Adobe XMP) standar agensi microstock dengan dukungan Title & Dedicated English Description. | [METADATA_SPECIFICATION.md](file:///D:/GPTIMAGEGENERATE/docs/METADATA_SPECIFICATION.md) |
+| **4. Riwayat Versi & Catatan Rilis (*Version Changelog*)** | Riwayat evolusi rilis aplikasi (`v1.0.0` s/d `v2.0.1`), daftar fitur baru per versi, penambahan gaya Premium Line Art Icon, saklar mode UI, dan panduan rollback Git Tag. | [VERSION_CHANGELOG.md](file:///D:/GPTIMAGEGENERATE/docs/VERSION_CHANGELOG.md) |
 
 ---
 

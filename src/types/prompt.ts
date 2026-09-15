@@ -70,6 +70,7 @@ export interface PromptVersion {
   commercialDirection?: string; // e.g. "Food & Beverage"
   composition?: string;      // e.g. "single-isolated", "grouped-still-life"
   adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
+  adobeStockDescription?: string; // English Adobe Stock SEO Description ~120-250 chars
   keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
   commercialBrief?: CommercialBrief;
   inputTokens: number;       // Token input
@@ -90,6 +91,7 @@ export interface PromptItem {
   composition?: string;
   colorPalette?: string;
   adobeStockTitle?: string;  // English Adobe Stock SEO Title <= 120 chars
+  adobeStockDescription?: string; // English Adobe Stock SEO Description ~120-250 chars
   keywords?: string[];       // 10-48 Stock Keywords (max 2 words per tag)
   commercialBrief?: CommercialBrief;
   targetEngine: TargetEngine;
@@ -128,6 +130,7 @@ export interface PromptItem {
 export interface PromptExpansionResult {
   title: string;
   adobeStockTitle?: string;
+  adobeStockDescription?: string;
   keywords?: string[];
   commercialDirection?: string;
   composition?: string;

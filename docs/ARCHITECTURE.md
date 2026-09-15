@@ -73,15 +73,13 @@ GPTIMAGEGENERATE/
 ## 3. Skema Basis Data SQLite (`server/db/schema.ts`)
 
 ```typescript
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 
 export const prompts = sqliteTable('prompts', {
-  id: text('id').primaryKey(),
-  batchId: text('batch_id'),
+  id: text('id').primaryKey(), // UUID / prompt ID
+  batchId: text('batch_id'), // Group ID untuk multi-prompt / batch runs
   variationIndex: integer('variation_index').default(1),
   title: text('title').notNull(),
-  adobeStockTitle: text('adobe_stock_title'), // Judul SEO Adobe Stock (≤120 karakter)
-  keywords: text('keywords'), // JSON array string (10-48 tags microstock)
   rawIdea: text('raw_idea').notNull(),
   optimizedPrompt: text('optimized_prompt').notNull(),
   negativePrompt: text('negative_prompt'),
@@ -89,17 +87,28 @@ export const prompts = sqliteTable('prompts', {
   aspectRatio: text('aspect_ratio').notNull().default('1:1'),
   stylePreset: text('style_preset'),
   vectorStyle: text('vector_style'),
+  commercialDirection: text('commercial_direction'), // 1 dari 10 Pilar Pasar 2026
+  composition: text('composition').default('single-isolated'), // 1 dari 5 Mode Komposisi
   isBlackAndWhite: integer('is_black_and_white', { mode: 'boolean' }).notNull().default(false),
-  activePromptVersionIndex: integer('active_prompt_version_index').default(0),
+  
+  // Adobe Stock SEO Metadata
+  adobeStockTitle: text('adobe_stock_title'), // Judul SEO Adobe Stock (≤120 karakter)
+  keywords: text('keywords'), // JSON array string (10-48 tags microstock berperingkat 4-tier)
+  
+  // Commercial Art Director & Quality Gate Brief
+  commercialBrief: text('commercial_brief'), // JSON string dari CommercialBrief (analisis pasar & skor)
+  
+  // Multi-Version Prompt Timeline
   promptVersionsData: text('prompt_versions_data'), // JSON string array versi prompt
+  activePromptVersionIndex: integer('active_prompt_version_index').default(0),
   
   // File Path & Versi Gambar (Hanya metadata path, TANPA base64 di DB)
-  imagePath: text('image_path'),
+  imagePath: text('image_path'), // Path gambar aktif
   allImagePaths: text('all_image_paths'), // JSON string array path gambar
   imagesData: text('images_data'), // JSON string array GeneratedImageVersion[]
   generationCount: integer('generation_count').notNull().default(0),
   
-  // Tracking Token & Akumulasi Biaya
+  // Tracking Token & Akumulasi Biaya Terpisah
   inputTokens: integer('input_tokens').default(0),
   outputTokens: integer('output_tokens').default(0),
   promptCostUsd: text('prompt_cost_usd').default('0.000000'),
@@ -111,9 +120,13 @@ export const prompts = sqliteTable('prompts', {
 });
 
 export const exchangeRates = sqliteTable('exchange_rates', {
-  date: text('date').primaryKey(), // Format YYYY-MM-DD
-  rate: text('rate').notNull(), // Nilai kurs (misal: "16250.00")
-  source: text('source').notNull(), // "api.co.id" atau "cache"
+  id: text('id').primaryKey(), // misal: 'rate_2026-09-15'
+  date: text('date').notNull(), // Format YYYY-MM-DD
+  baseCurrency: text('base_currency').notNull().default('USD'),
+  targetCurrency: text('target_currency').notNull().default('IDR'),
+  rate: real('rate').notNull(), // Nilai kurs riil (misal: 16250.00)
+  source: text('source').notNull().default('api.co.id'),
+  updatedAt: text('updated_at').notNull(),
   fetchedAt: integer('fetched_at').notNull(),
 });
 ```
@@ -127,3 +140,4 @@ Untuk mencegah lonjakan request API bersamaan (*rate limiting*) dan memastikan s
 - Setiap permintaan *Render Gambar* atau *Re-generate* dimasukkan ke dalam antrean `taskQueue`.
 - Worker mengeksekusi tugas satu per satu secara sekuensial dengan jeda aman (*safety delay* 300–600ms).
 - Status kartu aktif ditandai secara visual di UI (*Menunggu Giliran Antrean*, *Sedang Merender*, *Selesai*).
+

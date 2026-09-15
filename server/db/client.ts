@@ -69,6 +69,9 @@ try {
   if (!existingCols.includes('adobe_stock_title')) {
     sqlite.exec('ALTER TABLE prompts ADD COLUMN adobe_stock_title TEXT;');
   }
+  if (!existingCols.includes('adobe_stock_description')) {
+    sqlite.exec('ALTER TABLE prompts ADD COLUMN adobe_stock_description TEXT;');
+  }
   if (!existingCols.includes('keywords')) {
     sqlite.exec('ALTER TABLE prompts ADD COLUMN keywords TEXT;');
   }

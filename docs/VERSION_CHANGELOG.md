@@ -8,7 +8,8 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 | Versi Tag | Tanggal Rilis | Status | Sorotan Utama |
 |---|---|---|---|
-| **`v2.0.0`** | September 2026 | **Aktif (Latest)** | **5-Tier Commercial Architecture** (*Idea → Direction → Concept → Style → Composition → Prompt*), **Commercial Score Quality Gate** (< 7.0 Rework / >= 7.0 Pass), **5 Komposisi Mandiri & Dynamic Isolation**, **Adobe Stock Official SEO Hierarchy & 4-Tier Ranked Keywords**, Auto SQLite DB Migration. |
+| **`v2.0.1`** | September 2026 | **Aktif (Latest)** | **Dedicated English Metadata Description**: Generator deskripsi komersial bahasa Inggris (120–250 chars) pada mode SEO, re-generate multi-versi, On-Demand SEO per kartu, SQLite schema migration (`adobe_stock_description`), dan injeksi biner 3-lapisan (IPTC 2:120, EXIF 0x010E, XMP `dc:description`). |
+| **`v2.0.0`** | September 2026 | Stabil | **5-Tier Commercial Architecture** (*Idea → Direction → Concept → Style → Composition → Prompt*), **Commercial Score Quality Gate** (< 7.0 Rework / >= 7.0 Pass), **5 Komposisi Mandiri & Dynamic Isolation**, **Adobe Stock Official SEO Hierarchy & 4-Tier Ranked Keywords**, Auto SQLite DB Migration. |
 | **`v1.3.1`** | September 2026 | Stabil | Gaya ke-7 **Premium Line Art Icon** (Mandat Zero-Color Fill & Coloring Book Printable), **On-Demand SEO Metadata Generator** per kartu, Sinkronisasi Title/Description biner. |
 | **`v1.3.0`** | September 2026 | Stabil | AI Concept Expander (1–2 kata → 5 ide subjek 3–4 kata), Pembersihan nama file spasi alami tanpa underscore `_` & `1x1`, Modal Versi & Feature Switcher. |
 | **`v1.2.0`** | September 2026 | Stabil | Auto-Runner Wizard (batch sekuensial 1–50), Logging Error harian terpusat, Kurs USD/IDR dinamis via API. |
@@ -19,7 +20,20 @@ Dokumen ini mencatat seluruh riwayat versi, pembaruan fitur, perbaikan bug, dan 
 
 ## 🚀 Rincian Catatan Rilis per Versi
 
-### Versi 2.0.0 — *Commercial Art Director & 5-Tier Decision Engine Edition* (Versi Aktif)
+### Versi 2.0.1 — *Dedicated English SEO Metadata Description & Multi-Version Synchronizer* (Versi Aktif)
+- **📝 Dedicated English SEO Description (120–250 Karakter)**:
+  - AI Art Director Engine kini menghasilkan deskripsi komersial bahasa Inggris faktual saat saklar SEO aktif, saat melakukan re-generate prompt versi baru, atau saat menekan tombol *On-Demand SEO Generator*.
+  - Rangkuman komersial berfokus pada subjek utama, gaya vektor 2D, properti visual, dan target use case pasar.
+- **🔄 Multi-Version Re-generation Support**:
+  - Setiap variasi sudut pandang prompt baru (`v2`, `v3`, dst.) memiliki deskripsi khusus yang tersinkronisasi di riwayat timeline prompt.
+- **🗄️ SQLite DB Auto-Migration (`adobe_stock_description`)**:
+  - Penambahan kolom `adobe_stock_description` pada tabel `prompts` dengan runtime migration otomatis yang aman.
+- **🖼️ Injeksi Biner Presisi 3-Lapisan**:
+  - File PNG dan JPEG otomatis menyematkan deskripsi ke IPTC Dataset 2:120 (*Caption/Abstract*), EXIF `ImageDescription` & `XPComment`, serta Adobe XMP `dc:description`.
+
+---
+
+### Versi 2.0.0 — *Commercial Art Director & 5-Tier Decision Engine Edition*
 - **🏛️ 5-Tier Commercial Decision Architecture (`Idea → Direction → Concept → Style → Composition → Prompt`)**:
   - Mengubah paradigma dari sekadar generator prompt teks biasa menjadi **Art Director Decision Engine** terstruktur.
   - DeepSeek menganalisis konsep sebelum menyintesis visual prompt: *marketCategory*, *targetBuyer*, *primaryUseCases*, *commercialConcept*, *visualHook*, *differentiation*, dan *searchIntent*.

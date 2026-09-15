@@ -421,6 +421,7 @@ export function usePromptGenerator() {
 
           const newTitle = aiData.title ? `${aiData.title} [v${nextVersionNum}: ${angle.style}]` : `${target.title} (v${nextVersionNum})`;
           const newAdobeStockTitle = aiData.adobeStockTitle !== undefined ? aiData.adobeStockTitle : target.adobeStockTitle;
+          const newAdobeStockDescription = aiData.adobeStockDescription !== undefined ? aiData.adobeStockDescription : target.adobeStockDescription;
           const newKeywords = Array.isArray(aiData.keywords) ? aiData.keywords : target.keywords;
           const newNegativePrompt = aiData.negativePrompt || target.negativePrompt;
           const newVectorStyle = aiData.vectorStyle || target.vectorStyle;
@@ -431,6 +432,7 @@ export function usePromptGenerator() {
             version: nextVersionNum,
             title: newTitle,
             adobeStockTitle: newAdobeStockTitle,
+            adobeStockDescription: newAdobeStockDescription,
             keywords: newKeywords,
             commercialDirection: newCommercialDirection,
             composition: newComposition,
@@ -455,6 +457,7 @@ export function usePromptGenerator() {
             ...target,
             title: newTitle,
             adobeStockTitle: newAdobeStockTitle,
+            adobeStockDescription: newAdobeStockDescription,
             keywords: newKeywords,
             commercialDirection: newCommercialDirection,
             composition: newComposition,
@@ -700,6 +703,9 @@ export function usePromptGenerator() {
         let adobeStockTitle: string | undefined = includeMetadata
           ? `${concept.trim()} 2D Vector Illustration Icon Isolated on White Background`
           : undefined;
+        let adobeStockDescription: string | undefined = includeMetadata
+          ? `Clean 2D vector graphic illustration of ${concept.trim()}, featuring crisp contours and commercial aesthetics for digital design and branding.`
+          : undefined;
         let keywords: string[] | undefined = includeMetadata
           ? [
               ...concept.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
@@ -739,6 +745,7 @@ export function usePromptGenerator() {
               if (aiData.commercialBrief) commercialBrief = aiData.commercialBrief;
               if (aiData.composition) promptComposition = aiData.composition;
               if (aiData.adobeStockTitle !== undefined) adobeStockTitle = aiData.adobeStockTitle;
+              if (aiData.adobeStockDescription !== undefined) adobeStockDescription = aiData.adobeStockDescription;
               if (Array.isArray(aiData.keywords)) keywords = aiData.keywords;
               if (aiData.negativePrompt) negativePrompt = aiData.negativePrompt;
               if (aiData.vectorStyle) vectorStyle = aiData.vectorStyle;
@@ -758,6 +765,7 @@ export function usePromptGenerator() {
           version: 1,
           title,
           adobeStockTitle,
+          adobeStockDescription,
           keywords,
           commercialBrief,
           commercialDirection,
@@ -776,6 +784,7 @@ export function usePromptGenerator() {
           batchId,
           title,
           adobeStockTitle,
+          adobeStockDescription,
           keywords,
           commercialBrief,
           commercialDirection,
@@ -971,6 +980,7 @@ export function usePromptGenerator() {
             return {
               ...v,
               adobeStockTitle: data.adobeStockTitle,
+              adobeStockDescription: data.adobeStockDescription,
               keywords: data.keywords,
             };
           }
@@ -980,11 +990,13 @@ export function usePromptGenerator() {
         const updated: PromptItem = {
           ...target,
           adobeStockTitle: data.adobeStockTitle,
+          adobeStockDescription: data.adobeStockDescription,
           keywords: data.keywords,
           promptVersions: updatedVersions.length > 0 ? updatedVersions : [{
             version: 1,
             title: target.title,
             adobeStockTitle: data.adobeStockTitle,
+            adobeStockDescription: data.adobeStockDescription,
             keywords: data.keywords,
             optimizedPrompt: target.optimizedPrompt,
             negativePrompt: target.negativePrompt,

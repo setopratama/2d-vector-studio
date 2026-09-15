@@ -18,6 +18,7 @@ export const prompts = sqliteTable('prompts', {
   
   // Adobe Stock SEO Metadata
   adobeStockTitle: text('adobe_stock_title'), // English SEO Title <= 120 chars
+  adobeStockDescription: text('adobe_stock_description'), // English SEO Description ~120-250 chars
   keywords: text('keywords'), // JSON array string or comma separated keywords (10-48 tags)
   
   // Commercial Art Director & Quality Gate Brief

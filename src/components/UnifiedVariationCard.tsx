@@ -106,6 +106,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
           version: 1,
           title: item.title,
           adobeStockTitle: item.adobeStockTitle,
+          adobeStockDescription: item.adobeStockDescription,
           keywords: item.keywords,
           commercialBrief: item.commercialBrief,
           optimizedPrompt: item.optimizedPrompt,
@@ -125,8 +126,9 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   const activePromptVersion = promptVersions[activePromptVersionIndex] || promptVersions[0];
   const commercialBrief = activePromptVersion.commercialBrief || item.commercialBrief;
 
-  // Active SEO Title & Keywords
+  // Active SEO Title, Description & Keywords
   const activeStockTitle = activePromptVersion.adobeStockTitle || item.adobeStockTitle || '';
+  const activeStockDescription = activePromptVersion.adobeStockDescription || item.adobeStockDescription || '';
   const activeKeywords = (activePromptVersion.keywords || item.keywords || []) as string[];
   const hasSeoMetadata = Boolean(
     activeStockTitle.trim() &&
@@ -134,6 +136,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     activeKeywords.length > 0
   );
 
+  const finalDescription = activeStockDescription.trim() ? activeStockDescription.trim() : activeStockTitle;
   const titleLength = activeStockTitle.length;
   const isTitleValidLength = titleLength <= 120;
 
@@ -151,8 +154,9 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
   };
 
   const handleCopyDesc = async () => {
-    if (!activeStockTitle) return;
-    await navigator.clipboard.writeText(activeStockTitle);
+    const textToCopy = finalDescription;
+    if (!textToCopy) return;
+    await navigator.clipboard.writeText(textToCopy);
     setCopiedDesc(true);
     setTimeout(() => setCopiedDesc(false), 2000);
   };
@@ -161,7 +165,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     if (activeKeywords.length === 0) return;
     const commaSeparated = activeKeywords.join(', ');
     await navigator.clipboard.writeText(commaSeparated);
-    setCopiedKeywordsComma(true);
+    setCopiedKeywordsComma(false);
     setTimeout(() => setCopiedKeywordsComma(false), 2000);
   };
 
@@ -183,7 +187,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
       await downloadSingleImage(downloadUrl, fileName, {
         title: activeStockTitle,
         keywords: activeKeywords,
-        description: activeStockTitle,
+        description: finalDescription,
         author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
         software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
         credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
@@ -204,7 +208,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
     await downloadSingleImage(downloadUrl, fileName, {
       title: seoTitle,
       keywords: activeKeywords.length > 0 ? activeKeywords : undefined,
-      description: seoTitle,
+      description: finalDescription || seoTitle,
       author: contributorProfile?.includeAuthor ? (contributorProfile.authorName || undefined) : undefined,
       software: contributorProfile?.includeSoftware ? (contributorProfile.softwareName || undefined) : undefined,
       credit: contributorProfile?.includeCredit ? (contributorProfile.credit || undefined) : undefined,
@@ -706,8 +710,10 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       <span className="text-xs font-bold uppercase font-mono tracking-wider text-amber-950">
                         Metadata Description (English):
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                        SESUAI TITLE
+                      <span className={`text-[10px] font-mono px-1.5 py-0.2 font-bold ${
+                        activeStockDescription ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                      }`}>
+                        {activeStockDescription ? `${activeStockDescription.length} CHARS • CUSTOM` : 'SESUAI TITLE'}
                       </span>
                     </div>
 
@@ -731,7 +737,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                   </div>
 
                   <div className="p-2.5 bg-white border border-amber-300 text-stone-800 font-mono text-xs font-medium select-all leading-relaxed">
-                    {activeStockTitle}
+                    {finalDescription}
                   </div>
                 </div>
 

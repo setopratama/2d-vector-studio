@@ -44,9 +44,9 @@ Ketika pengguna menekan tombol unduh gambar, metadata diselaraskan serentak ke d
 - **Struktur Segmen**: Photoshop Resource Block 8BIM (`0x38 0x42 0x49 0x4D`), Resource ID `0x0404` (IPTC-NAA record).
 - **Deklarasi Charset UTF-8**: Record 1 Dataset `0x5A` dengan urutan escape sequence `\x1b%G` untuk memastikan aksen dan karakter internasional terbaca sempurna tanpa corrupt encoding.
 - **Datasets yang Diselaraskan**:
-  - `Record 2:05`: Object Name (*Title / Judul Gambar*)
+  - `Record 2:05`: Object Name (*Title / Judul SEO Gambar*)
   - `Record 2:25`: Keywords (Setiap tag disimpan berurutan sebagai record dataset terpisah)
-  - `Record 2:120`: Caption / Abstract (*Deskripsi Prompt*)
+  - `Record 2:120`: Caption / Abstract (*Dedicated English SEO Description / Rangkuman Komersial*)
   - `Record 2:80`: By-line (*Author / Nama Pembuat*)
   - `Record 2:110`: Credit (*Hak Cipta / Credit*)
   - `Record 2:115`: Source (*Sumber Aset*)
@@ -56,13 +56,13 @@ Ketika pengguna menekan tombol unduh gambar, metadata diselaraskan serentak ke d
 ### Lapisan 2: EXIF IFD0 & Windows XP Extended Tags
 - **Header Standar TIFF**: Little-Endian (`II` / `0x49 0x49 0x2A 0x00`).
 - **Tag Standar IFD0**:
-  - `0x010E` (`ImageDescription`): ASCII string teks judul dan prompt.
+  - `0x010E` (`ImageDescription`): ASCII string teks deskripsi komersial bahasa Inggris (`adobeStockDescription`).
   - `0x013B` (`Artist`): Nama Author / Creator.
   - `0x0131` (`Software`): Nama perangkat lunak (default: *"Adobe Illustrator"*).
 - **Tag Ekstensi Windows XP (Encoding UCS-2 / UTF-16LE)**:
   - `0x9C9B` (`XPTitle`): Judul gambar (dibaca langsung oleh Windows Explorer Properties).
   - `0x9C9E` (`XPKeywords`): Daftar kata kunci dipisahkan dengan tanda titik koma (`;`).
-  - `0x9C9C` (`XPComment`): Deskripsi gambar.
+  - `0x9C9C` (`XPComment`): Deskripsi gambar komersial bahasa Inggris (`adobeStockDescription`).
   - `0x9C9D` (`XPAuthor`): Nama Author.
   - `0x9C9F` (`XPSubject`): Subjek gambar.
 
@@ -72,7 +72,7 @@ Ketika pengguna menekan tombol unduh gambar, metadata diselaraskan serentak ke d
 - Menyisipkan paket XMP berstandar W3C RDF/XML yang dibungkus header `<?xpacket begin="..." id="W5M0MpCehiHzreSzNTczkc9d"?>`.
 - **Skema yang Ditanam**:
   - `dc:title`: `<rdf:Alt><rdf:li xml:lang="x-default">{Title}</rdf:li></rdf:Alt>`
-  - `dc:description`: `<rdf:Alt><rdf:li xml:lang="x-default">{Description}</rdf:li></rdf:Alt>`
+  - `dc:description`: `<rdf:Alt><rdf:li xml:lang="x-default">{adobeStockDescription}</rdf:li></rdf:Alt>`
   - `dc:creator`: `<rdf:Seq><rdf:li>{Author}</rdf:li></rdf:Seq>`
   - `dc:subject`: `<rdf:Bag><rdf:li>{Keyword 1}</rdf:li><rdf:li>{Keyword 2}</rdf:li>...</rdf:Bag>`
   - `photoshop:Headline`: `{Title}`
