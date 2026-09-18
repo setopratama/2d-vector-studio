@@ -12,6 +12,7 @@ export interface QueueTask {
   id: string;
   promptId: string;
   type: 'generate-image' | 'regenerate-image' | 'regenerate-prompt';
+  reworkInstruction?: string;
   addedAt: number;
 }
 
@@ -361,7 +362,7 @@ export function usePromptGenerator() {
   /**
    * Core execution: Regenerate Prompt for a prompt item (Preserves history timeline)
    */
-  const executeRegeneratePrompt = async (promptId: string) => {
+  const executeRegeneratePrompt = async (promptId: string, customReworkInstruction?: string) => {
     // Check if network is offline before executing
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       cancelAllQueueTasks('⚠️ Koneksi internet mati. Pembuatan prompt dibatalkan.');
@@ -395,6 +396,8 @@ export function usePromptGenerator() {
         target.adobeStockTitle || (Array.isArray(target.keywords) && target.keywords.length > 0)
       );
 
+      const reworkToUse = customReworkInstruction || target.commercialBrief?.reworkInstruction;
+
       const aiRes = await fetch('/api/generate-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -408,6 +411,7 @@ export function usePromptGenerator() {
           commercialDirection: target.commercialDirection,
           isBlackAndWhite: target.isBlackAndWhite,
           includeMetadata: hasExistingSeo,
+          reworkInstruction: reworkToUse,
         }),
       });
 
@@ -509,7 +513,7 @@ export function usePromptGenerator() {
         if (currentTask.type === 'generate-image' || currentTask.type === 'regenerate-image') {
           await executeGenerateImage(currentTask.promptId);
         } else if (currentTask.type === 'regenerate-prompt') {
-          await executeRegeneratePrompt(currentTask.promptId);
+          await executeRegeneratePrompt(currentTask.promptId, currentTask.reworkInstruction);
         }
       } catch (err: any) {
         console.error('Queue task execution error:', err);
@@ -530,7 +534,7 @@ export function usePromptGenerator() {
   /**
    * Enqueue a new task into the FIFO queue worker
    */
-  const enqueueTask = useCallback((promptId: string, type: QueueTask['type']) => {
+  const enqueueTask = useCallback((promptId: string, type: QueueTask['type'], reworkInstruction?: string) => {
     // Check if network is offline
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage('⚠️ Tidak ada koneksi internet. Tidak dapat menambahkan antrean.');
@@ -549,6 +553,7 @@ export function usePromptGenerator() {
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       promptId,
       type,
+      reworkInstruction,
       addedAt: Date.now(),
     };
 
@@ -576,10 +581,10 @@ export function usePromptGenerator() {
   };
 
   /**
-   * Action: Enqueue regenerate prompt for a single card
+   * Action: Enqueue regenerate prompt for a single card with optional 1-step REWORK instruction
    */
-  const handleRegeneratePrompt = (promptId: string) => {
-    enqueueTask(promptId, 'regenerate-prompt');
+  const handleRegeneratePrompt = (promptId: string, reworkInstruction?: string) => {
+    enqueueTask(promptId, 'regenerate-prompt', reworkInstruction);
   };
 
   /**

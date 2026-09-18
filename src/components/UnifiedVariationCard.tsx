@@ -44,7 +44,7 @@ interface UnifiedVariationCardProps {
   onOpenProfileSettings?: () => void;
   onGenerateImage: (promptId: string) => void;
   onRegenerateImage: (promptId: string) => void;
-  onRegeneratePrompt?: (promptId: string) => void;
+  onRegeneratePrompt?: (promptId: string, reworkInstruction?: string) => void;
   onGenerateSeoMetadata?: (promptId: string) => void;
   isGeneratingSeo?: boolean;
   onSelectPromptVersion?: (promptId: string, versionIndex: number) => void;
@@ -426,37 +426,46 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                   </div>
                 </div>
 
-                {/* REWORK Cost-Saving Advisory Banner */}
+                {/* REWORK Cost-Saving Advisory Banner & 1-Step Actionable Recommendation */}
                 {commercialBrief.decision === 'REWORK' && (
-                  <div className="p-2.5 bg-rose-50 border border-rose-300 text-rose-900 text-[11px] flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                      <span>
-                        <strong>Quality Gate Warning:</strong> Skor komersial di bawah 7.0. Rework prompt disarankan sebelum render gambar ($0.020).
-                      </span>
+                  <div className="p-3 bg-rose-50 border-2 border-rose-300 text-rose-950 text-[11px] space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1 flex-1">
+                        <div className="font-bold uppercase tracking-wider text-rose-900">
+                          Art Director REWORK Recommendation:
+                        </div>
+                        <p className="text-rose-800 leading-relaxed font-sans text-xs">
+                          "{commercialBrief.reworkInstruction || `Differentiate visual subject of "${item.rawIdea}", expand buyer utility versatility across media, and apply clear copy-space framing.`}"
+                        </p>
+                      </div>
                     </div>
+
                     {onRegeneratePrompt && (
-                      <button
-                        type="button"
-                        onClick={() => onRegeneratePrompt(item.id)}
-                        disabled={isProcessing || isQueued}
-                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold uppercase cursor-pointer transition-colors"
-                      >
-                        🔄 Rework AI Concept
-                      </button>
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => onRegeneratePrompt(item.id, commercialBrief.reworkInstruction)}
+                          disabled={isProcessing || isQueued}
+                          className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-white" />
+                          <span>⚡ Apply Art Director REWORK Recommendation (1-Click)</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
 
-                {/* 5 Score Metrics Grid */}
+                {/* 6 Score Metrics Grid (Includes Buyer Utility) */}
                 {commercialBrief.scores && (
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1 text-[10px]">
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5 pt-1 text-[10px]">
                     {/* 1. Commercial Usefulness */}
                     <div className="p-2 bg-white border border-stone-300 space-y-1">
                       <div className="text-stone-500 font-bold uppercase truncate" title="Commercial Usefulness">1. Commercial</div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-stone-900">{Number(commercialBrief.scores.commercial).toFixed(1)}</span>
-                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${Number(commercialBrief.scores.commercial) >= 8.0 ? 'bg-emerald-600' : Number(commercialBrief.scores.commercial) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
                             style={{ width: `${(Number(commercialBrief.scores.commercial) / 10) * 100}%` }}
@@ -465,12 +474,26 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       </div>
                     </div>
 
-                    {/* 2. Visual Uniqueness */}
+                    {/* 2. Buyer Utility & Versatility */}
                     <div className="p-2 bg-white border border-stone-300 space-y-1">
-                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Uniqueness">2. Uniqueness</div>
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Buyer Utility & Versatility">2. Utility</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-stone-900">{Number(commercialBrief.scores.buyerUtility || 8.4).toFixed(1)}</span>
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${Number(commercialBrief.scores.buyerUtility || 8.4) >= 8.0 ? 'bg-emerald-600' : Number(commercialBrief.scores.buyerUtility || 8.4) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            style={{ width: `${(Number(commercialBrief.scores.buyerUtility || 8.4) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Visual Uniqueness */}
+                    <div className="p-2 bg-white border border-stone-300 space-y-1">
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Uniqueness & Non-Redundancy">3. Uniqueness</div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-stone-900">{Number(commercialBrief.scores.uniqueness).toFixed(1)}</span>
-                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${Number(commercialBrief.scores.uniqueness) >= 8.0 ? 'bg-indigo-600' : Number(commercialBrief.scores.uniqueness) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
                             style={{ width: `${(Number(commercialBrief.scores.uniqueness) / 10) * 100}%` }}
@@ -479,12 +502,12 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       </div>
                     </div>
 
-                    {/* 3. Searchability & Demand */}
+                    {/* 4. Searchability & Demand */}
                     <div className="p-2 bg-white border border-stone-300 space-y-1">
-                      <div className="text-stone-500 font-bold uppercase truncate" title="Searchability & Market Demand">3. Searchability</div>
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Searchability & Market Demand">4. Search</div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-stone-900">{Number(commercialBrief.scores.searchability).toFixed(1)}</span>
-                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${Number(commercialBrief.scores.searchability) >= 8.0 ? 'bg-amber-500' : Number(commercialBrief.scores.searchability) >= 7.0 ? 'bg-amber-600' : 'bg-rose-500'}`}
                             style={{ width: `${(Number(commercialBrief.scores.searchability) / 10) * 100}%` }}
@@ -493,12 +516,12 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       </div>
                     </div>
 
-                    {/* 4. Vector Suitability */}
+                    {/* 5. Vector Suitability */}
                     <div className="p-2 bg-white border border-stone-300 space-y-1">
-                      <div className="text-stone-500 font-bold uppercase truncate" title="Vector Autotrace Suitability">4. Vector Ready</div>
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Vector Autotrace Suitability">5. Vector Ready</div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-stone-900">{Number(commercialBrief.scores.vectorSuitability).toFixed(1)}</span>
-                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${Number(commercialBrief.scores.vectorSuitability) >= 8.0 ? 'bg-emerald-600' : Number(commercialBrief.scores.vectorSuitability) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
                             style={{ width: `${(Number(commercialBrief.scores.vectorSuitability) / 10) * 100}%` }}
@@ -507,12 +530,12 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                       </div>
                     </div>
 
-                    {/* 5. Visual Clarity */}
+                    {/* 6. Visual Clarity */}
                     <div className="p-2 bg-white border border-stone-300 space-y-1">
-                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Clarity & Readability">5. Clarity</div>
+                      <div className="text-stone-500 font-bold uppercase truncate" title="Visual Clarity & Readability">6. Clarity</div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-stone-900">{Number(commercialBrief.scores.visualClarity || 9.0).toFixed(1)}</span>
-                        <div className="w-10 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                        <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${Number(commercialBrief.scores.visualClarity || 9.0) >= 8.0 ? 'bg-purple-600' : Number(commercialBrief.scores.visualClarity || 9.0) >= 7.0 ? 'bg-amber-500' : 'bg-rose-500'}`}
                             style={{ width: `${(Number(commercialBrief.scores.visualClarity || 9.0) / 10) * 100}%` }}
@@ -523,7 +546,7 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                   </div>
                 )}
 
-                {/* Primary Market & Target Buyer Info */}
+                {/* Primary Market & Target Buyer Info + Concept Family */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
                   <div className="p-2 bg-white border border-stone-300 space-y-0.5">
                     <div className="text-stone-500 font-bold text-[10px] uppercase flex items-center gap-1">
@@ -536,9 +559,16 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                   <div className="p-2 bg-white border border-stone-300 space-y-0.5">
                     <div className="text-stone-500 font-bold text-[10px] uppercase flex items-center gap-1">
                       <TrendingUp className="w-3 h-3 text-stone-700" />
-                      <span>Market Category:</span>
+                      <span>Market Category &amp; Family:</span>
                     </div>
-                    <div className="text-stone-900 font-medium">{commercialBrief.marketCategory}</div>
+                    <div className="text-stone-900 font-medium flex items-center gap-1.5 flex-wrap">
+                      <span>{commercialBrief.marketCategory}</span>
+                      {commercialBrief.conceptFamily && (
+                        <span className="text-[9px] bg-indigo-100 text-indigo-900 px-1.5 py-0.2 font-bold border border-indigo-200">
+                          {commercialBrief.conceptFamily}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -575,11 +605,16 @@ export const UnifiedVariationCard: React.FC<UnifiedVariationCardProps> = ({
                     <div className="space-y-1 pt-1.5 border-t border-stone-100">
                       <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-1">
                         <Compass className="w-3 h-3 text-indigo-600" />
-                        <span>Strategi Komposisi &amp; Vektor:</span>
+                        <span>Strategi Komposisi, Copy-Space &amp; Vektor:</span>
                       </span>
                       <p className="text-stone-800 text-[11px]">
                         <strong>Komposisi:</strong> {commercialBrief.compositionStrategy}
                       </p>
+                      {commercialBrief.copySpaceStrategy && (
+                        <p className="text-stone-800 text-[11px]">
+                          <strong>Copy-Space:</strong> {commercialBrief.copySpaceStrategy}
+                        </p>
+                      )}
                       <p className="text-stone-700 text-[11px]">
                         <strong>Vector Tracing:</strong> {commercialBrief.vectorStrategy}
                       </p>

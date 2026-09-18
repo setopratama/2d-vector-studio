@@ -12,9 +12,9 @@ export const SERVER_STYLE_PRESETS: Record<
   },
   'mascot-logo': {
     name: 'Mascot Character',
-    category: 'sticker',
-    description: 'Iconic die-cut character mascot, clean thick strokes, high contrast, perfect for merchandise',
-    promptSnippet: 'bold 2D vector mascot, thick black outer stroke, die-cut sticker silhouette, vibrant solid fill colors, isolated on pure white background, svg autotrace friendly',
+    category: 'vector',
+    description: 'Iconic character mascot logo, crisp thick outlines, high contrast, zero sticker border, perfect for branding & merchandise',
+    promptSnippet: 'bold 2D vector mascot character logo, crisp thick black outlines, sharp character silhouette contours, vibrant solid fill colors, no white sticker outline, no die-cut offset border, isolated on pure white background, svg autotrace friendly',
   },
   'monoline-ink': {
     name: 'Monoline Line Art',
@@ -52,6 +52,12 @@ export const SERVER_COMPOSITION_PRESETS: Record<
   string,
   { name: string; description: string; promptSnippet: string; isIsolated: boolean }
 > = {
+  'auto': {
+    name: 'Auto (Art Director Choice)',
+    description: 'Art Director secara otomatis memilih tata letak terbaik (isolated, grouped, scene, atau badge) berdasarkan analisis target pembeli & kegunaan komersial',
+    promptSnippet: 'dynamically selected optimal commercial spatial composition based on target buyer utility',
+    isIsolated: true,
+  },
   'isolated-object': {
     name: 'Isolated Object',
     description: 'Satu objek utama terpusat, siluet batas tegas, zero clutter, siap autotrace SVG & icon',
@@ -131,9 +137,13 @@ export interface CommercialBrief {
   searchIntent: string[];
   compositionStrategy: string;
   vectorStrategy: string;
+  copySpaceStrategy?: string;
+  conceptFamily?: string;
+  reworkInstruction?: string;
   risks: string[];
   scores: {
     commercial: number;
+    buyerUtility?: number;
     uniqueness: number;
     searchability: number;
     vectorSuitability: number;
@@ -154,6 +164,7 @@ export interface PromptExpansionParams {
   commercialDirection?: string;
   isBlackAndWhite?: boolean;
   includeMetadata?: boolean;
+  reworkInstruction?: string;
 }
 
 export interface PromptExpansionResult {
@@ -197,13 +208,15 @@ export async function generateOptimizedPrompt(
     promptSnippet: 'crisp 2D flat vector art, sharp geometric contours, bold solid lines, clean screen-print aesthetic, isolated on pure white background, svg graphic ready',
   };
 
-  const compositionKey = params.composition || 'isolated-object';
+  const isAutoComposition = !params.composition || params.composition === 'auto';
+  const compositionKey = isAutoComposition ? 'isolated-object' : (params.composition || 'isolated-object');
   const compositionInfo = SERVER_COMPOSITION_PRESETS[compositionKey] || SERVER_COMPOSITION_PRESETS['isolated-object'];
-  const isIsolated = compositionInfo.isIsolated ?? (compositionKey !== 'commercial-scene' && compositionKey !== 'minimal-context');
+  const isIsolated = isAutoComposition ? true : (compositionInfo.isIsolated ?? (compositionKey !== 'commercial-scene' && compositionKey !== 'minimal-context'));
 
   const variationAngle = params.variationStyle || 'Dynamic Angle';
   const variationIndexStr = params.variationIndex ? ` (Variation #${params.variationIndex})` : '';
   const includeMeta = Boolean(params.includeMetadata);
+  const explicitReworkInstruction = params.reworkInstruction ? params.reworkInstruction.trim() : undefined;
 
   const isMonochrome = presetKey === 'premium-line-art' || presetKey === 'monoline-ink' || presetKey === 'stencil-silhouette' || Boolean(params.isBlackAndWhite);
   const isLineArt = presetKey === 'premium-line-art' || presetKey === 'monoline-ink';
@@ -217,7 +230,7 @@ export async function generateOptimizedPrompt(
    - "adobeStockDescription": Factual, descriptive 120-250 characters English summary for microstock buyers. Clearly describe the core subject, 2D vector styling, aesthetic attributes, and commercial use cases (e.g. branding, packaging, web icons, editorial).
 8. Adobe Stock Keywords Requirement (ORDERED STRICTLY BY SEARCH IMPORTANCE):
    - "keywords": An array of 25 to 40 high-relevance search tags in English, sorted strictly in descending order of importance (first 10 are most critical):
-     • Rank 1–10 (Tier 1 - Strongest Search Intent): Core subject name, primary commercial concept, exact buyer queries.
+     • Rank 1–10 (Tier 1 - Strongest Search Intent): Core subject name, primary commercial concept, exact buyer queries, and "generative ai".
      • Rank 11–20 (Tier 2 - Subject Components & Props): Individual objects, tools, visual elements present in the graphic.
      • Rank 21–30 (Tier 3 - Visual Style & Primary Use Cases): 2D vector style, flat design, packaging, branding, menu, icon.
      • Rank 31–40 (Tier 4 - Secondary Relevance & Themes): Broader themes, lifestyle concepts, ${isIsolated ? 'isolated, white background' : 'scene context'}.
@@ -233,27 +246,33 @@ IDEA (Core Subject)
   ↓
 COMMERCIAL DIRECTION (Why it is made / 2026 Microstock Market Pillar)
   ↓
-COMMERCIAL CONCEPT (Strategic positioning, visual hook, target buyer, differentiation)
+COMMERCIAL CONCEPT (Strategic positioning, visual hook, target buyer, differentiation, concept family)
   ↓
 STYLE (How it looks / 2D Vector Rendering format & stroke technique)
   ↓
-COMPOSITION (How it is arranged / Spatial layout & framing)
+COMPOSITION & COPY-SPACE (Spatial layout, framing & text copy-space strategy)
   ↓
 PROMPT SYNTHESIS (Final 30-50 word 2D visual prompt)
+
+ADOBE STOCK AI DISTINCT CONTENT GUIDELINES:
+- Prioritize semantic concept diversification (Establish distinct subject/utility value per variation; reject trivial visual-only camera turns or cosmetic permutations).
+- Curate outputs selectively with high buyer utility across packaging, branding, UI, and editorial media.
+- Incorporate controlled copy-space strategy for text placement (e.g. top-left empty header space, center crest text area, asymmetric side copy space).
 
 INPUT PARAMETERS:
 - Commercial Direction (WHY): "${commercialDirection}"
 - Style Preset (HOW IT LOOKS): "${presetInfo.name}" (${presetInfo.promptSnippet})
-- Composition Strategy (HOW IT IS ARRANGED): "${compositionInfo.name}" (${compositionInfo.promptSnippet})
-- Isolation Mode: ${isIsolated ? 'ISOLATED ASSET (White Background)' : 'CONTEXTUAL / SCENE (Integrated Environment)'}
+- Composition Selection Mode: ${isAutoComposition ? 'AUTO (Art Director MUST select optimal spatial composition from: isolated-object, object-group, minimal-context, commercial-scene, decorative-composition)' : `FIXED: "${compositionInfo.name}" (${compositionInfo.promptSnippet})`}
+${explicitReworkInstruction ? `- REWORK MANDATE: Apply this exact Art Director recommendation to fix weak uniqueness/marketability: "${explicitReworkInstruction}"` : ''}
 
 OPERATING RULES:
-1. NO CHAIN-OF-THOUGHT OR PROSE: Do NOT explain your thought process or output conversational filler. Directly return your final structured analysis decisions in JSON format.
-2. COMMERCIAL DECISION-FIRST: Anchor all commercial analysis strictly around "${commercialDirection}". Determine targetBuyer, primaryUseCases, searchIntent, commercialConcept, and visualHook BEFORE synthesizing the prompt.
-3. STRICT STYLE & COMPOSITION COHESION: Follow the visual rendering of "${presetInfo.name}" and the spatial layout of "${compositionInfo.name}".
-4. PROMPT SYNTHESIS: The "optimizedPrompt" MUST combine "commercialConcept" + "visualHook" + "${presetInfo.name}" + "${compositionInfo.name}" into a concise (30-50 words) 2D visual prompt in English.
-   ${isIsolated ? '- ISOLATION MANDATE: Isolate the subject cleanly on pure solid white background for SVG extraction.' : '- CONTEXTUAL SCENE MANDATE: Do NOT force pure white isolated background. Synthesize a coherent flat 2D commercial vector scene or contextual environment (e.g. modern interior, workspace setting, or subtle grounding environment) with clean flat shapes, cohesive color hierarchy, and zero raster clutter.'}
-5. QUALITY GATE SCORING: Evaluate marketability objectively (scores 1-10 on commercial, uniqueness, searchability, vectorSuitability, visualClarity). Set "decision": "PASS" if overall >= 7.0 and vectorSuitability >= 7.0, otherwise "REWORK".
+1. NO CHAIN-OF-THOUGHT OR PROSE: Output directly in JSON format.
+2. COMMERCIAL DECISION-FIRST: Anchor all commercial analysis strictly around "${commercialDirection}". Determine targetBuyer, primaryUseCases, searchIntent, commercialConcept, visualHook, conceptFamily, and copySpaceStrategy BEFORE synthesizing prompt.
+3. COMPOSITION SELECTION: ${isAutoComposition ? 'Choose the best composition strategy for the target buyer and set compositionStrategy in commercialBrief.' : `Follow fixed composition "${compositionInfo.name}".`}
+4. PROMPT SYNTHESIS: The "optimizedPrompt" MUST combine commercialConcept + visualHook + ${presetInfo.name} + compositionStrategy + copySpaceStrategy into a concise (30-50 words) 2D visual prompt in English.
+5. QUALITY GATE & SCORING: Evaluate marketability objectively (scores 1-10 on commercial, buyerUtility, uniqueness, searchability, vectorSuitability, visualClarity).
+   - Set "decision": "PASS" ONLY IF overall >= 7.0 AND vectorSuitability >= 7.0 AND uniqueness >= 7.0 AND buyerUtility >= 7.0.
+   - Set "decision": "REWORK" if any score is below threshold, and provide a concrete 1-step "reworkInstruction" detailing how to shift the subject concept for distinct commercial value.
 ${presetKey === 'premium-line-art' ? `6. PREMIUM LINE ART MANDATE: Pure black uniform monoline, 85-90% detail simplification, ~70-75% negative white space, STRICT ZERO COLOR FILL (no color words or color fills), coloring-book / printable ready.` : ''}
 ${metadataSystemInstruction}
 
@@ -264,24 +283,28 @@ RESPOND STRICTLY IN JSON FORMAT:
     "marketCategory": "e.g. Food and Beverage (aligned with ${commercialDirection})",
     "targetBuyer": "e.g. coffee brands, cafes, packaging designers",
     "primaryUseCases": ["packaging", "menu design", "social media", "editorial illustration"],
-    "commercialConcept": "e.g. specialty coffee brewing equipment and preparation",
+    "commercialConcept": "e.g. specialty pour-over coffee brewing equipment setup",
+    "conceptFamily": "e.g. Specialty Coffee Artisanal Series",
     "visualHook": "e.g. compact brewing setup arranged as a clean geometric still life",
-    "differentiation": "e.g. focus on specialty brewing rather than generic coffee cup imagery",
-    "searchIntent": ["specialty coffee", "coffee brewing", "coffee equipment", "barista tools"],
-    "compositionStrategy": "${compositionInfo.name}",
+    "differentiation": "e.g. focus on specialty pour-over dripper and gooseneck kettle rather than generic mug",
+    "searchIntent": ["specialty coffee", "pour over dripper", "barista equipment", "coffee brewing"],
+    "compositionStrategy": "${isAutoComposition ? 'isolated-object' : compositionInfo.name}",
+    "copySpaceStrategy": "e.g. generous top-right negative white space for brand copy",
     "vectorStrategy": "e.g. medium detail, strong contours, simplified recognizable equipment",
     "risks": ["avoid background clutter", "maintain crisp solid vector contours"],
     "scores": {
       "commercial": 8.8,
-      "uniqueness": 8.1,
+      "buyerUtility": 8.5,
+      "uniqueness": 8.2,
       "searchability": 9.0,
       "vectorSuitability": 9.4,
       "visualClarity": 9.0,
-      "overall": 8.86
+      "overall": 8.82
     },
-    "decision": "PASS"
+    "decision": "PASS",
+    "reworkInstruction": "If decision is REWORK, provide 1-step actionable recommendation to differentiate the asset"
   },
-  "optimizedPrompt": "Concise 30-50 words 2D visual prompt synthesized directly from commercialConcept, visualHook, ${presetInfo.name}, and ${compositionInfo.name}${isIsolated ? ', isolated on pure solid white background' : ''}",
+  "optimizedPrompt": "Concise 30-50 words 2D visual prompt synthesized directly from commercialConcept, visualHook, ${presetInfo.name}, compositionStrategy, and copySpaceStrategy",
   "negativePrompt": "${isIsolated ? 'photorealistic, 3d, realistic shadows, gradients, noise, scenic background, landscape, environment sprawl' : 'photorealistic, 3d render, hyperrealistic textures, messy gradients, blurry noise, depth of field blur'}",
   "vectorStyle": "${presetInfo.name} - ${variationAngle}",
   "colorPalette": "${isLineArt ? 'Zero Color Fill / Black Monoline' : isMonochrome ? 'Pure Black & White Ink' : 'Flat Solid Colors'}"${includeMeta ? `,\n  "adobeStockTitle": "Commercial SEO English Title between 70 and 120 chars${isIsolated ? ', isolated on white background' : ''}",\n  "adobeStockDescription": "Descriptive 120-250 characters English summary describing the visual subject, vector style, commercial context, and application.",\n  "keywords": ["tag1", "tag2", "tag3"]` : ''}
@@ -308,12 +331,12 @@ RESPOND STRICTLY IN JSON FORMAT:
   const userContent = `rawIdea: "${params.rawIdea}".
 Commercial Direction (WHY): "${commercialDirection}".
 Selected Style Preset (HOW IT LOOKS): "${presetInfo.name}" (${presetInfo.promptSnippet}).
-Composition Strategy (LAYOUT): "${compositionInfo.name}" (${compositionInfo.promptSnippet}).
-Isolation Mode: ${isIsolated ? 'Isolated on White Background' : 'Commercial Scene / Contextual Composition'}.
+Composition Mode: ${isAutoComposition ? 'AUTO (Art Director Choice)' : `FIXED: "${compositionInfo.name}"`}.
 Variation Angle: "${variationAngle}"${variationIndexStr}.
 Target Engine: ${params.targetEngine || 'gpt-image'}. Aspect Ratio: ${params.aspectRatio || '1:1'}.
+${explicitReworkInstruction ? `Apply Rework Instruction: "${explicitReworkInstruction}".` : ''}
 ${colorModeInstruction}
-Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercialDirection}", construct commercial brief with quality scores, and synthesize the 30-50 words 2D visual prompt combining style "${presetInfo.name}" and composition "${compositionInfo.name}" (${isIsolated ? 'isolated on pure white background' : 'integrated commercial 2D vector scene'})${includeMeta ? ', plus Adobe Stock SEO Title (70-120 chars), Adobe Stock Description (120-250 chars) and 25-45 stock keywords' : ''}.`;
+Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercialDirection}", enforce distinct concept diversification, select optimal composition and copy-space strategy, evaluate buyer utility & uniqueness quality scores, and synthesize the 30-50 words 2D visual prompt.`;
 
   const response = await fetch(promptEndpoint, {
     method: 'POST',
@@ -350,8 +373,8 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
       adobeStockTitle: defaultTitle,
       adobeStockDescription: `Clean 2D vector graphic illustration of ${params.rawIdea}, suitable for commercial design and digital assets.`,
       keywords: isIsolated
-        ? ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector']
-        : ['vector art', 'vector scene', 'flat design', 'illustration', 'commercial scene', 'vector illustration', 'graphic', '2d vector'],
+        ? ['vector art', 'flat design', 'illustration', 'graphic', 'isolated', 'white background', 'icon', 'clipart', '2d vector', 'generative ai']
+        : ['vector art', 'vector scene', 'flat design', 'illustration', 'commercial scene', 'vector illustration', 'graphic', '2d vector', 'generative ai'],
       optimizedPrompt: content || params.rawIdea,
       negativePrompt: isLineArt
         ? 'color, colors, colorful, green fill, red fill, blue fill, yellow fill, solid color fill, color fills, vibrant fills, grayscale, gray tones, shading, realistic shadows, gradients, realistic texture, 3d, photorealistic, noise, blur, photographic render, pencil, sketch, watercolor, paint, cross hatching, stippling'
@@ -367,19 +390,22 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
         targetBuyer: 'commercial buyers, digital designers, content creators',
         primaryUseCases: ['branding', 'digital graphics', 'microstock', 'editorial'],
         commercialConcept: `${params.rawIdea} commercial asset`,
+        conceptFamily: `${commercialDirection} Vector Series`,
         visualHook: `clean ${presetInfo.name} visual rendering`,
-        differentiation: 'distinctive 2D commercial vector aesthetics',
+        differentiation: 'distinctive 2D commercial vector aesthetics with clear copy-space framing',
         searchIntent: [params.rawIdea, 'vector graphic', 'stock asset'],
         compositionStrategy: compositionInfo.name,
+        copySpaceStrategy: 'Generative negative white space framing for headline copy',
         vectorStrategy: 'crisp vector shapes and bold contours',
         risks: ['avoid clutter', 'maintain vector integrity'],
         scores: {
           commercial: 8.5,
+          buyerUtility: 8.4,
           uniqueness: 8.0,
           searchability: 9.0,
           vectorSuitability: 9.4,
           visualClarity: 9.0,
-          overall: 8.86,
+          overall: 8.72,
         },
         decision: 'PASS',
       },
@@ -402,39 +428,61 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
       .replace(/\b(green|red|blue|yellow|orange|purple|pink)\s+fill\b/gi, 'zero color fill');
   }
 
+  if (presetKey === 'mascot-logo') {
+    sanitizedPrompt = sanitizedPrompt
+      .replace(/die-cut sticker border/gi, 'crisp character outlines')
+      .replace(/die-cut sticker silhouette/gi, 'sharp mascot silhouette')
+      .replace(/thick sticker stroke border/gi, 'thick black character outlines')
+      .replace(/sticker stroke border/gi, 'bold character outlines')
+      .replace(/white sticker border/gi, 'clean vector contours')
+      .replace(/sticker outline/gi, 'clean character outlines')
+      .replace(/white die-cut border/gi, 'clean vector background')
+      .replace(/die-cut border/gi, 'clean vector contours');
+  }
+
   // Ensure Commercial Brief structure with safe fallbacks
   let commercialBrief: CommercialBrief | undefined = undefined;
   if (parsed.commercialBrief && typeof parsed.commercialBrief === 'object') {
     const cb = parsed.commercialBrief;
     const scores = cb.scores || {};
     const commScore = typeof scores.commercial === 'number' ? Number(scores.commercial) : (typeof scores.commercialUsefulness === 'number' ? Number(scores.commercialUsefulness) : 8.8);
+    const buyerUtilityScore = typeof scores.buyerUtility === 'number' ? Number(scores.buyerUtility) : 8.4;
     const uniqScore = typeof scores.uniqueness === 'number' ? Number(scores.uniqueness) : 8.1;
     const searchScore = typeof scores.searchability === 'number' ? Number(scores.searchability) : 9.0;
     const vecScore = typeof scores.vectorSuitability === 'number' ? Number(scores.vectorSuitability) : 9.4;
     const clarScore = typeof scores.visualClarity === 'number' ? Number(scores.visualClarity) : 9.0;
-    const computedOverall = Number(((commScore + uniqScore + searchScore + vecScore + clarScore) / 5).toFixed(2));
+    const computedOverall = Number(((commScore + buyerUtilityScore + uniqScore + searchScore + vecScore + clarScore) / 6).toFixed(2));
     const overallScore = typeof scores.overall === 'number' ? Number(Number(scores.overall).toFixed(2)) : computedOverall;
+
+    // Strict Quality Gate: Require overall >= 7.0, vectorSuitability >= 7.0, uniqueness >= 7.0, buyerUtility >= 6.5
+    const isGatePass = overallScore >= 7.0 && vecScore >= 7.0 && uniqScore >= 7.0 && buyerUtilityScore >= 6.5;
+    const finalDecision = cb.decision === 'REWORK' ? 'REWORK' : (isGatePass ? 'PASS' : 'REWORK');
+    const defaultReworkMsg = `Shift visual focus of "${params.rawIdea}" to a specialized sub-theme, expand buyer use-case versatility, and add clean copy-space framing.`;
 
     commercialBrief = {
       marketCategory: String(cb.marketCategory || 'Commercial Vector Illustration & Iconography'),
       targetBuyer: String(cb.targetBuyer || 'Brand designers, marketing agencies & merchandise sellers'),
       primaryUseCases: Array.isArray(cb.primaryUseCases) ? cb.primaryUseCases.map(String) : ['Commercial branding & logos', 'Merchandise & apparel print', 'Digital UI/UX & web asset'],
       commercialConcept: String(cb.commercialConcept || `High-impact 2D vector asset for ${params.rawIdea}`),
+      conceptFamily: String(cb.conceptFamily || `${commercialDirection} Series`),
       visualHook: String(cb.visualHook || 'Clean iconic silhouette with high-contrast focal clarity'),
       differentiation: String(cb.differentiation || 'Crisp geometric contours engineered for instant SVG autotracing'),
       searchIntent: Array.isArray(cb.searchIntent) ? cb.searchIntent.map(String) : [`${params.rawIdea} vector`, `${params.rawIdea} icon`, `${params.rawIdea} logo`],
       compositionStrategy: String(cb.compositionStrategy || 'Centered hero framing with generous negative space on pure white background'),
+      copySpaceStrategy: String(cb.copySpaceStrategy || 'Generous negative space for copy framing'),
       vectorStrategy: String(cb.vectorStrategy || 'Sharp solid contours and clean closed paths optimized for vector tracing'),
+      reworkInstruction: finalDecision === 'REWORK' ? String(cb.reworkInstruction || defaultReworkMsg) : undefined,
       risks: Array.isArray(cb.risks) ? cb.risks.map(String) : ['Ensure zero background noise and maintain sharp vector contours'],
       scores: {
         commercial: commScore,
+        buyerUtility: buyerUtilityScore,
         uniqueness: uniqScore,
         searchability: searchScore,
         vectorSuitability: vecScore,
         visualClarity: clarScore,
         overall: overallScore,
       },
-      decision: cb.decision === 'REWORK' ? 'REWORK' : (overallScore >= 7.0 && vecScore >= 7.0 ? 'PASS' : 'REWORK'),
+      decision: finalDecision,
     };
   } else {
     // Construct default high-quality brief if LLM skipped
@@ -443,19 +491,22 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
       targetBuyer: 'Brand designers, marketing agencies & merchandise creators',
       primaryUseCases: ['Commercial branding & logo design', 'Merchandise & apparel print', 'Web & app UI graphics'],
       commercialConcept: `Iconic 2D vector representation of ${params.rawIdea}`,
+      conceptFamily: `${commercialDirection} Vector Series`,
       visualHook: 'Striking silhouette with high-contrast focal clarity',
       differentiation: 'Optimized flat vector styling ready for immediate SVG conversion',
       searchIntent: [`${params.rawIdea} vector`, `${params.rawIdea} icon`, `flat ${params.rawIdea}`],
       compositionStrategy: 'Centered hero subject on solid pure white background',
+      copySpaceStrategy: 'Generous negative space framing for logo & headline text',
       vectorStrategy: 'Clean closed paths with solid contrast, autotrace friendly',
       risks: ['Avoid background clutter or gradient noise'],
       scores: {
         commercial: 8.8,
+        buyerUtility: 8.5,
         uniqueness: 8.1,
         searchability: 9.0,
         vectorSuitability: 9.4,
         visualClarity: 9.0,
-        overall: 8.86,
+        overall: 8.8,
       },
       decision: 'PASS',
     };
@@ -513,11 +564,15 @@ Execute 5-Tier Commercial Pipeline: Perform commercial analysis for "${commercia
   const costUsd = (promptTokens * inputRate) + (completionTokens * outputRate);
   const costIdr = costUsd * usdToIdr;
 
-  const defaultNegativePrompt = isLineArt
+  let defaultNegativePrompt = isLineArt
     ? 'color, colors, colorful, green fill, red fill, blue fill, yellow fill, solid color fill, color fills, vibrant fills, grayscale, gray tones, shading, realistic shadows, gradients, realistic texture, 3d, photorealistic, noise, blur, photographic render, pencil, sketch, watercolor, paint, cross hatching, stippling, scenic background, landscape, environment sprawl'
     : isMonochrome
     ? 'color, colors, colorful, grayscale, gray tones, shading, soft shadows, gradients, realistic texture, 3d, photorealistic, noise, blur, photographic render, landscape, scenic background'
     : 'photorealistic, 3d render, realistic shadows, photography, depth of field blur, noise, grain, complex messy background, realistic skin pores, lens flare, micro-gradients, landscape, scenic background, environment sprawl';
+
+  if (presetKey === 'mascot-logo') {
+    defaultNegativePrompt += ', sticker outline, white sticker border, die-cut border, offset border, white outline gap, sticker decal frame, badge border';
+  }
 
   return {
     title: parsed.title || params.rawIdea.slice(0, 30),

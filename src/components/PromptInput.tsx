@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Palette,
   Layout,
+  Wand2,
 } from 'lucide-react';
 
 const DIRECTION_ICONS: Record<string, any> = {
@@ -42,6 +43,7 @@ const DIRECTION_ICONS: Record<string, any> = {
 };
 
 const COMPOSITION_ICONS: Record<string, any> = {
+  'auto': Wand2,
   'isolated-object': Maximize2,
   'object-group': Layers,
   'minimal-context': Sparkles,

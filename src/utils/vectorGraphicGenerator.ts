@@ -78,12 +78,9 @@ export function generate2DVectorSvgDataUrl(
     }
 
     case 'mascot-logo': {
-      // Bold Mascot Character with heavy contour outline
+      // Bold Mascot Character with crisp contour outline (No sticker border)
       centralArtwork = `
       <g transform="scale(1.2)">
-        <!-- Outer Heavy Die-Cut Stroke Silhouette -->
-        <polygon points="0,-200 -160,-50 -120,150 0,210 120,150 160,-50" 
-                 fill="${strokeColor}" />
         <!-- Mascot Base -->
         <polygon points="0,-180 -140,-40 -100,130 0,190 100,130 140,-40" 
                  fill="${isBlackAndWhite ? '#000000' : mainColor}" 

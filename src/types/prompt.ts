@@ -49,9 +49,13 @@ export interface CommercialBrief {
   searchIntent: string[];
   compositionStrategy: string;
   vectorStrategy: string;
+  copySpaceStrategy?: string;
+  conceptFamily?: string;
+  reworkInstruction?: string;
   risks: string[];
   scores: {
     commercial: number;        // Commercial Usefulness (1-10)
+    buyerUtility?: number;     // Buyer Utility & Versatility (1-10)
     uniqueness: number;        // Visual Uniqueness (1-10)
     searchability: number;     // Searchability & Demand (1-10)
     vectorSuitability: number; // Vector Autotrace Suitability (1-10)

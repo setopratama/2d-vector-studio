@@ -3,6 +3,15 @@ import { StylePreset, TargetEngine, CommercialDirection, CompositionPreset } fro
 
 export const COMPOSITION_PRESETS: CompositionPreset[] = [
   {
+    id: 'auto',
+    name: 'Auto (Art Director Choice)',
+    tagline: 'Layout Otomatis Berdasarkan Pembeli',
+    description: 'Art Director secara otomatis memilih tata letak terbaik (isolated, grouped, scene, atau badge) berdasarkan analisis target pembeli & kegunaan komersial',
+    promptSnippet: 'dynamically selected optimal commercial spatial composition based on target buyer utility',
+    isIsolated: true,
+    iconName: 'Wand2',
+  },
+  {
     id: 'isolated-object',
     name: 'Isolated Object',
     tagline: 'Asset Terisolasi White BG',
@@ -51,17 +60,17 @@ export const COMPOSITION_PRESETS: CompositionPreset[] = [
 
 // Helper to resolve composition preset by ID with legacy backwards compatibility
 export function resolveCompositionPreset(id?: string): CompositionPreset {
-  if (!id) return COMPOSITION_PRESETS[0];
+  if (!id) return COMPOSITION_PRESETS[1]; // default to isolated-object for legacy
   const exact = COMPOSITION_PRESETS.find((c) => c.id === id);
   if (exact) return exact;
 
   // Legacy mappings
-  if (id === 'single-isolated') return COMPOSITION_PRESETS[0]; // isolated-object
-  if (id === 'grouped-still-life' || id === 'mini-icon-set') return COMPOSITION_PRESETS[1]; // object-group
-  if (id === 'hero-with-accents' || id === 'dynamic-diagonal') return COMPOSITION_PRESETS[2]; // minimal-context
-  if (id === 'circular-badge') return COMPOSITION_PRESETS[4]; // decorative-composition
+  if (id === 'single-isolated') return COMPOSITION_PRESETS[1]; // isolated-object
+  if (id === 'grouped-still-life' || id === 'mini-icon-set') return COMPOSITION_PRESETS[2]; // object-group
+  if (id === 'hero-with-accents' || id === 'dynamic-diagonal') return COMPOSITION_PRESETS[3]; // minimal-context
+  if (id === 'circular-badge') return COMPOSITION_PRESETS[5]; // decorative-composition
 
-  return COMPOSITION_PRESETS[0];
+  return COMPOSITION_PRESETS[1];
 }
 
 export const COMMERCIAL_DIRECTIONS: CommercialDirection[] = [
@@ -158,9 +167,9 @@ export const STYLE_PRESETS: StylePreset[] = [
   {
     id: 'mascot-logo',
     name: 'Mascot Character',
-    category: 'sticker',
-    description: 'Iconic die-cut character mascot, clean thick strokes, high contrast, perfect for merchandise',
-    promptSnippet: 'bold 2D vector mascot, thick black outer stroke, die-cut sticker silhouette, vibrant solid fill colors, isolated on pure white background, svg autotrace friendly',
+    category: 'vector',
+    description: 'Iconic character mascot logo, crisp thick outlines, high contrast, no sticker border, perfect for branding & merchandise',
+    promptSnippet: 'bold 2D vector mascot character logo, crisp thick black outlines, sharp silhouette contours, vibrant solid fill colors, zero sticker outline, zero white die-cut border, isolated on pure white background, svg autotrace friendly',
   },
   {
     id: 'monoline-ink',
@@ -216,11 +225,11 @@ export const PRESET_VARIATIONS: Record<string, StyleVariationAngle[]> = {
     { style: 'Minimalist Deconstructed', suffix: 'minimalist deconstructed flat vector forms, essential geometric lines, pure solid fills' },
   ],
   'mascot-logo': [
-    { style: 'Aggressive Front View', suffix: 'intense frontal mascot stance, bold thick outer strokes, die-cut vector contours' },
+    { style: 'Aggressive Front View', suffix: 'intense frontal mascot stance, bold thick clean outer strokes, sharp mascot contours, no sticker outline' },
     { style: 'Dynamic 3/4 Action Pose', suffix: 'dynamic three-quarter action pose, athletic mascot curves, sharp contour lines' },
     { style: 'Side Profile Mascot Head', suffix: 'fierce side profile mascot head, sharp geometric jawline, heavy black outlines' },
     { style: 'Shield Framed Mascot', suffix: 'mascot centerpiece inside clean geometric shield outline, bold vector badge lines' },
-    { style: 'Expressive Head Icon', suffix: 'expressive mascot head icon, clean rounded vector paths, thick sticker stroke border' },
+    { style: 'Expressive Head Icon', suffix: 'expressive mascot head icon, clean rounded vector paths, bold character stroke' },
     { style: 'Esports Stance', suffix: 'angular esports mascot stance, sharp angular vector cuts, solid color fills' },
   ],
   'monoline-ink': [
